@@ -1,0 +1,101 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "build",
+  "instructions": [
+    "AGENTS.md",
+    "docs/instructions/opencode-core.md"
+  ],
+  "compaction": {
+    "auto": true,
+    "prune": true,
+    "reserved": 12000
+  },
+  "watcher": {
+    "ignore": [
+      "node_modules/**",
+      ".git/**",
+      "dist/**",
+      "build/**"
+    ]
+  },
+  "permission": {
+    "skill": {
+      "*": "allow"
+    }
+  },
+  "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "enabled": false,
+      "headers": {
+        "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}"
+      }
+    },
+    "sequential": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "enabled": false
+    },
+    "playwright": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@playwright/mcp@latest"
+      ],
+      "enabled": false
+    },
+    "chrome-devtools": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "chrome-devtools-mcp@latest"
+      ],
+      "enabled": false
+    },
+    "tavily": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "tavily-mcp@latest"
+      ],
+      "enabled": false,
+      "environment": {
+        "TAVILY_API_KEY": "{env:TAVILY_API_KEY}"
+      }
+    },
+    "serena": {
+      "type": "local",
+      "command": [
+        "uvx",
+        "--from",
+        "git+https://github.com/oraios/serena",
+        "serena",
+        "start-mcp-server",
+        "--context",
+        "ide",
+        "--project-from-cwd"
+      ],
+      "enabled": true
+    },
+    "morph": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@morph-llm/morph-fast-apply"
+      ],
+      "enabled": false,
+      "environment": {
+        "MORPH_API_KEY": "{env:MORPH_API_KEY}"
+      }
+    }
+  }
+}
