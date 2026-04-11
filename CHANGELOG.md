@@ -33,7 +33,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Example configurations
 
 **Tests**
-- Bun test suite for framework structure validation
+- Bun test suite for framework structure validation (15 tests)
+
+**Documentation**
+- README.md, INSTALL.md, USAGE.md, COMMANDS.md, ARCHITECTURE.md
+- CONTRIBUTING.md, LICENSE
+- CodeRabbit configuration (.coderabbit.yaml)
 
 ### Features
 
@@ -42,7 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Phase 2: Behavioral Reconstruction - Enhanced modes with upstream behaviors
 - Phase 3: Plugin Engine - Hooks, persistence, checkpoints
 - Phase 4: Advanced Features - sc-spawn, sc-recommend
-- Phase 5: Packaging - npm-ready, cross-platform validated
+- Phase 5: Packaging - npm-ready, cross-platform validated, CI/CD
 
 ### Commands Added
 
@@ -50,21 +55,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 |----------|----------|
 | Workflow | sc-brainstorm, sc-design, sc-implement |
 | Diagnostic | sc-analyze, sc-troubleshoot |
-| Quality | sc-test, sc-document |
-| Research | sc-research |
+| Quality | sc-test, sc-document, sc-improve, sc-cleanup |
+| Research | sc-research, sc-explain, sc-estimate |
 | Orchestration | sc-task, sc-workflow, sc-agent, sc-spawn |
 | PM | sc-pm, sc-help, sc-recommend, sc-index, sc-index-repo |
 | Persistence | sc-save, sc-load, sc-reflect |
-| Utility | sc-estimate, sc-build, sc-improve, sc-cleanup, sc-explain, sc-git, sc-select-tool, sc-business-panel |
+| Utility | sc-build, sc-git, sc-select-tool, sc-business-panel |
 
 ### MCP Configuration
 
-- **serena**: Enabled (required for persistence)
-- **context7**: Recommended (documentation)
-- **sequential**: Recommended (reasoning)
-- **playwright**: Optional (testing)
-- **tavily**: Optional (research)
-- **morph**: Optional (fast edits)
+| MCP | Status | Description |
+|-----|--------|-------------|
+| serena | ✅ Enabled | Required for persistence |
+| context7 | ✅ Recommended | Documentation |
+| sequential | ✅ Recommended | Reasoning |
+| playwright | ⚪ Optional | Testing |
+| tavily | ⚪ Optional | Research |
+| morph | ⚪ Optional | Fast edits |
 
 ### Dependencies
 
@@ -73,6 +80,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - typescript: ^5.9.2
 - @types/node: ^24.3.0
 
+---
+
 ## [0.1.0] - 2026-04-10
 
 ### Added
@@ -80,13 +89,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial project scaffolding
 - Basic command structure
 - README and ARCHITECTURE documentation
-
----
-
-## Future Considerations
-
-- GitHub Actions CI/CD pipeline
-- Automated releases
-- npm publication
-- Additional test coverage
-- Public repository
