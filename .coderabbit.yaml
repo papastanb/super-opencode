@@ -1,0 +1,60 @@
+version: "v1"
+
+early_access: true
+
+reviews:
+  profile: "standard"
+  request_changes_workflow: true
+  high_level_summary: true
+  collapsewalkthrough: true
+
+auto_titleplaceholder: "[%PR_NUMBER%] %TITLE%"
+
+chat:
+  auto_reply: true
+
+tools:
+  auto_use_tool: true
+
+path_filters:
+  - "!**/*.md"
+  - "!**/node_modules/**"
+
+review_statuses:
+  require_review_approval: false
+
+qa:
+  onboarding: false
+  free_chat: true
+
+changelogs:
+  enabled: true
+  categories:
+    - label: "Features"
+      title: "🚀 Features"
+    - label: "Bug Fixes"
+      title: "🐛 Bug Fixes"
+    - label: "Improvements"
+      title: "✨ Improvements"
+    - label: "Documentation"
+      title: "📝 Documentation"
+
+files:
+  exclude:
+    - "**/*.lock"
+    - "**/bun.lock"
+    - "**/node_modules/**"
+    - "**/dist/**"
+    - "**/build/**"
+    - "upstream-superclaude/**"
+
+annotations:
+  exclude:
+    - "*.test.*"
+    - "tests/**"
+    - "**/scripts/**"
+
+language_settings:
+  - language: "typescript"
+    file_extensions: [".ts", ".tsx", ".js", ".jsx"]
+    generate_annotations: true
