@@ -3,7 +3,7 @@ version: "v1"
 early_access: true
 
 reviews:
-  profile: "standard"
+  profile: "chill"
   request_changes_workflow: true
   high_level_summary: true
   collapsewalkthrough: true
@@ -51,8 +51,6 @@ files:
 annotations:
   exclude:
     - "*.test.*"
-    - "tests/**"
-    - "**/scripts/**"
 
 language_settings:
   - language: "typescript"
