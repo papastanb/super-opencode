@@ -1,5 +1,5 @@
 {
-  "name": "super-opencode",
+  "name": "super-opencode-framework",
   "version": "1.0.0",
   "description": "Installable OpenCode framework that ports key SuperClaude workflows into a reusable project scaffold.",
   "author": "SuperClaude Community",
@@ -25,7 +25,7 @@
   "main": "./dist/.opencode/plugins/super-opencode.js",
   "types": "./dist/.opencode/plugins/super-opencode.d.ts",
   "bin": {
-    "super-opencode": "./scripts/install-project.mjs"
+    "super-opencode-framework": "./scripts/install-project.mjs"
   },
   "exports": {
     ".": {

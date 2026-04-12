@@ -11,20 +11,20 @@
 ### 1. Install The Package
 
 ```bash
-bun add -d super-opencode
+bun add -d super-opencode-framework
 ```
 
 ### 2. Scaffold The OpenCode Assets
 
 ```bash
-bunx super-opencode install
+bunx super-opencode-framework install
 ```
 
 Optional flags:
 
 ```bash
-bunx super-opencode install --target /path/to/project
-bunx super-opencode install --force
+bunx super-opencode-framework install --target /path/to/project
+bunx super-opencode-framework install --force
 ```
 
 ### 3. Verify Your Project Config
@@ -95,7 +95,7 @@ Add this path manually to your OpenCode config:
 ### Reinstall The Scaffold
 
 ```bash
-bunx super-opencode install --force
+bunx super-opencode-framework install --force
 ```
 
 ### Validate The Package Locally

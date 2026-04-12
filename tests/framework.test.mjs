@@ -10,7 +10,7 @@ describe('Project Structure', () => {
     expect(existsSync(pkgPath)).toBe(true)
     
     const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'))
-    expect(pkg.name).toBe('super-opencode')
+    expect(pkg.name).toBe('super-opencode-framework')
     expect(pkg.version).toBe('1.0.0')
   })
 

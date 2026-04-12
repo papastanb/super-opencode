@@ -26,7 +26,7 @@ Open a GitHub issue and include:
 - what you expected
 - your environment: OS, Node version, Bun version, OpenCode version
 
-If the issue is about installation, include whether you ran `bunx super-opencode install` inside an existing OpenCode project.
+If the issue is about installation, include whether you ran `bunx super-opencode-framework install` inside an existing OpenCode project.
 
 ## Pull Requests
 

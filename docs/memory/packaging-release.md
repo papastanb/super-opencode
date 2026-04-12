@@ -6,7 +6,7 @@
 
 ```json
 {
-  "name": "super-opencode",
+  "name": "super-opencode-framework",
   "version": "1.0.0",
   "main": ".opencode/plugins/super-opencode.ts",
   "exports": {

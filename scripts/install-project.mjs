@@ -91,7 +91,7 @@ const { command, force, target } = parseArgs(process.argv)
 
 if (command !== 'install') {
   console.error(`Unknown command: ${command}`)
-  console.error('Usage: super-opencode install [--target <path>] [--force]')
+  console.error('Usage: super-opencode-framework install [--target <path>] [--force]')
   process.exit(1)
 }
 

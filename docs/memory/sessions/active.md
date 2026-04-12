@@ -56,7 +56,7 @@ Hardening pre-publication: revue finale go/no-go passee, base prete pour commit.
 - mise a jour de la CI vers Node 24 et actions modernes
 - suppression du job PR fragile de labels
 - correction du packaging npm via build `dist/`, `exports` valides et dependance runtime plugin SDK
-- ajout du CLI `super-opencode install`
+- ajout du CLI `super-opencode-framework install`
 - ajout de `bun run release:check`
 - reecriture publique de `README.md` et `INSTALL.md` en anglais
 - ajout de `CODE_OF_CONDUCT.md`
@@ -81,7 +81,7 @@ Hardening pre-publication: revue finale go/no-go passee, base prete pour commit.
 
 ## Compaction Resume Prompt
 
-Repo Super OpenCode : checkpoint pris apres hardening release/public puis vague 2 de polish public. La branche par defaut GitHub est `main`. La CI cible `main` avec Node 24, `actions/checkout@v6`, `actions/setup-node@v6` et `oven-sh/setup-bun@v2`. Le package npm construit `dist/`, expose un plugin consommable et fournit un CLI `super-opencode install`. `README.md`, `INSTALL.md`, `CONTRIBUTING.md`, `COMMANDS.md`, `USAGE.md`, `ARCHITECTURE.md` et `CHANGELOG.md` sont alignes en anglais avec le contrat public actuel. `.opencode/README.md` a ete retire du tarball. La validation release utilise `npm pack --dry-run --json --loglevel=error` pour eviter un warning npm 11 non bloquant. `bun run check`, `bun test`, `bun run release:check` et `npm pack --dry-run --loglevel=error` passent. Verdict actuel : go pour commit et preparation de publication, sans bloqueur detecte.
+Repo Super OpenCode : checkpoint pris apres hardening release/public puis vague 2 de polish public. La branche par defaut GitHub est `main`. La CI cible `main` avec Node 24, `actions/checkout@v6`, `actions/setup-node@v6` et `oven-sh/setup-bun@v2`. Le package npm construit `dist/`, expose un plugin consommable et fournit un CLI `super-opencode-framework install`. `README.md`, `INSTALL.md`, `CONTRIBUTING.md`, `COMMANDS.md`, `USAGE.md`, `ARCHITECTURE.md` et `CHANGELOG.md` sont alignes en anglais avec le contrat public actuel. `.opencode/README.md` a ete retire du tarball. La validation release utilise `npm pack --dry-run --json --loglevel=error` pour eviter un warning npm 11 non bloquant. `bun run check`, `bun test`, `bun run release:check` et `npm publish --dry-run --loglevel=error` passent sous le nom `super-opencode-framework@1.0.0`. La publication reelle reste conditionnee a l'authentification npm et a l'assainissement de la cle Morph en clair du config utilisateur.
 
 ## Resume Reprise
 

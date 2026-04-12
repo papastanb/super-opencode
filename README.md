@@ -24,8 +24,8 @@
 ## Install In An Existing OpenCode Project
 
 ```bash
-bun add -d super-opencode
-bunx super-opencode install
+bun add -d super-opencode-framework
+bunx super-opencode-framework install
 ```
 
 This installs the Super OpenCode scaffold into the current project:

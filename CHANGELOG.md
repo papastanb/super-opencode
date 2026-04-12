@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `super-opencode install` scaffold flow for copying runtime assets into an existing OpenCode project.
+- `super-opencode-framework install` scaffold flow for copying runtime assets into an existing OpenCode project.
 - Public-facing English docs for installation, usage, architecture, commands, and contribution guidance.
 - Plugin hook tests covering the scaffolded runtime behavior.
 - `CODE_OF_CONDUCT.md`.

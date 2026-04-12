@@ -39,7 +39,7 @@
 - suppression du job PR fragile de labellisation
 - correction du packaging npm avec build TS -> `dist/` et `exports` valides
 - passage de `@opencode-ai/plugin` en dependance runtime
-- ajout d'un installateur CLI `super-opencode install`
+- ajout d'un installateur CLI `super-opencode-framework install`
 - ajout d'une validation de release package via `bun run release:check`
 - reecriture publique de `README.md` et `INSTALL.md` en anglais
 - ajout de `CODE_OF_CONDUCT.md`
