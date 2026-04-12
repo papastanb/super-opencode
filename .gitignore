@@ -1,0 +1,15 @@
+node_modules/
+.turbo/
+dist/
+build/
+coverage/
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.opencode-cache/
+*.log
+upstream-superclaude/
+.serena/
+PROJECT_INDEX.md
+PROJECT_INDEX.json

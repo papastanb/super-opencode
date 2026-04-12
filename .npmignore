@@ -1,0 +1,5 @@
+.opencode/README.md
+docs/memory/
+tests/
+coverage/
+*.log
