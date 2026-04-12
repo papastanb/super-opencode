@@ -2,20 +2,24 @@ name: CI / PR Review
 
 on:
   push:
-    branches: [main, release/*]
+    branches: [main]
   pull_request:
     branches: [main]
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+permissions:
+  contents: read
 
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: oven-sh/setup-bun@v1
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
@@ -34,6 +38,9 @@ jobs:
       - name: Cross-platform validation
         run: bun scripts/validate-cross-platform.mjs
 
+      - name: Release package validation
+        run: bun run release:check
+
   review-trigger:
     needs: validate
     runs-on: ubuntu-latest
@@ -45,15 +52,8 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ TypeScript: Passed" >> $GITHUB_STEP_SUMMARY
           echo "✅ Structure: Passed" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Tests: 15 passed" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Tests: Passed" >> $GITHUB_STEP_SUMMARY
           echo "✅ Cross-platform: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Package release checks: Passed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Ready for agent review (Qodo, Devin, CodeRabbit)" >> $GITHUB_STEP_SUMMARY
-
-      - name: Label PR for agents
-        uses: actions-ecosystem/action-add-labels@v1
-        if: github.event_name == 'pull_request'
-        with:
-          labels: |
-            ready-for-review
-            automated

@@ -1,180 +1,105 @@
 # Installation Guide
 
-## Prérequis
+## Supported Runtime
 
-- **Bun** 1.3.9 ou supérieur
-- **OpenCode** installé ou accès au CLI OpenCode
+- Node.js 24+
+- Bun 1.3.9+
+- OpenCode
 
-## Installation Rapide
+## Install In An Existing Project
+
+### 1. Install The Package
 
 ```bash
-# 1. Cloner le repository
-git clone https://github.com/papastanb/super-opencode.git
-cd super-opencode
+bun add -d super-opencode
+```
 
-# 2. Installer les dépendances
-bun install
+### 2. Scaffold The OpenCode Assets
 
-# 3. Vérifier la structure
-bun run check
+```bash
+bunx super-opencode install
+```
 
-# 4. Lancer OpenCode
+Optional flags:
+
+```bash
+bunx super-opencode install --target /path/to/project
+bunx super-opencode install --force
+```
+
+### 3. Verify Your Project Config
+
+The installer copies the Super OpenCode runtime assets into your project and updates `opencode.json` when it already exists.
+
+Review these locations after installation:
+
+- `.opencode/commands`
+- `.opencode/agents`
+- `.opencode/skills`
+- `.opencode/plugins`
+- `docs/instructions/opencode-core.md`
+
+### 4. Configure MCPs
+
+Super OpenCode expects Serena for the full persistence workflow.
+
+Recommended MCP strategy:
+
+- `serena`: enabled
+- `context7`: optional, recommended
+- `sequential`: optional, recommended
+- `playwright`, `chrome-devtools`, `tavily`, `morph`: optional
+
+Check the example config in `.opencode/examples/opencode.example.json`.
+
+### 5. Start OpenCode
+
+```bash
 opencode
 ```
 
-## Installation Détaillée
-
-### 1. Prérequis Système
-
-#### Windows
-```powershell
-# Installer Bun via PowerShell
-irm https://bun.sh/install.ps1 | iex
-```
-
-#### macOS / Linux
-```bash
-# Installer Bun
-curl -fsSL https://bun.sh/install | bash
-```
-
-### 2. Clonage du Projet
+## Develop This Repository
 
 ```bash
 git clone https://github.com/papastanb/super-opencode.git
 cd super-opencode
-```
-
-### 3. Installation des Dépendances
-
-```bash
 bun install
-```
-
-Cela installera :
-- `@opencode-ai/plugin` (peer dependency)
-- TypeScript 5.9+
-- @types/node 24.3+
-
-### 4. Vérification de l'Installation
-
-```bash
-# Vérifier la structure et les types
 bun run check
-
-# Lancer les tests
 bun test
-
-# Validation cross-platform
-bun scripts/validate-cross-platform.mjs
+bun run release:check
 ```
 
-### 5. Configuration OpenCode
+## Troubleshooting
 
-Le fichier `opencode.json` est préconfiguré avec :
-
-- **Serena MCP** (requis) - Persistance automatique
-- **Context7 MCP** (recommandé) - Documentation framework
-- **Sequential MCP** (recommandé) - Raisonnement complexe
-
-Pour utiliser Serena, vérifiez qu'il est bien enabled :
-```bash
-opencode mcp list
-```
-
-### 6. Première Utilisation
+### Node Or Bun Missing
 
 ```bash
-# Démarrer OpenCode
-opencode
-
-# Utiliser /sc-help pour voir les commandes disponibles
-/sc-help
+node --version
+bun --version
 ```
 
-## Configuration Avancée
+If Node.js 24+ or Bun is missing, install them first and rerun the installer.
 
-### Variables d'Environnement
+### No `opencode.json` In The Target Project
 
-Pour les MCP optionnels, créez un fichier `.env` :
+The installer can scaffold Super OpenCode without `opencode.json`, but it cannot update instructions automatically.
 
-```bash
-# Context7 (optionnel)
-CONTEXT7_API_KEY=your_key_here
-
-# Tavily (optionnel)
-TAVILY_API_KEY=your_key_here
-
-# Morph (optionnel)
-MORPH_API_KEY=your_key_here
-```
-
-### Personnalisation MCP
-
-Éditez `opencode.json` pour activer/désactiver les MCP :
+Add this path manually to your OpenCode config:
 
 ```json
 {
-  "mcp": {
-    "serena": { "enabled": true },
-    "context7": { "enabled": true },
-    "sequential": { "enabled": true },
-    "playwright": { "enabled": false },
-    "tavily": { "enabled": false },
-    "morph": { "enabled": false }
-  }
+  "instructions": ["docs/instructions/opencode-core.md"]
 }
 ```
 
-## Dépannage
-
-### Bun non installé
-```bash
-# Vérifier l'installation de Bun
-bun --version
-
-# Si pas installé, suivre les instructions sur https://bun.sh
-```
-
-### Erreur de permissions
-```bash
-# Sous Windows, exécuter en tant qu'administrateur
-# Sous Linux/macOS, vérifier les permissions du dossier
-chmod -R 755 .
-```
-
-### MCP non détecté
-```bash
-# Vérifier la configuration MCP
-opencode mcp list
-
-# Si absent, vérifier opencode.json
-cat opencode.json | jq '.mcp'
-```
-
-### Tests échoués
-```bash
-# Reinstaller les dépendances
-rm -rf node_modules bun.lock
-bun install
-
-# Relancer les tests
-bun test
-```
-
-## Désinstallation
+### Reinstall The Scaffold
 
 ```bash
-# Supprimer le dossier du projet
-cd ..
-rm -rf super-opencode
-
-# Optionnel: supprimer les caches OpenCode
-rm -rf ~/.opencode/cache
+bunx super-opencode install --force
 ```
 
-## Prochaines Étapes
+### Validate The Package Locally
 
-- Voir [USAGE.md](USAGE.md) pour l'utilisation
-- Voir [COMMANDS.md](COMMANDS.md) pour la référence des commandes
-- Voir [ARCHITECTURE.md](ARCHITECTURE.md) pour les détails techniques
+```bash
+bun run release:check
+```

@@ -1,13 +1,16 @@
 {
   "name": "super-opencode",
   "version": "1.0.0",
-  "description": "Portage complet de SuperClaude vers OpenCode - installable framework pourProductivité developer.",
+  "description": "Installable OpenCode framework that ports key SuperClaude workflows into a reusable project scaffold.",
   "author": "SuperClaude Community",
   "license": "MIT",
-  "homepage": "https://github.com/superclaude/super-opencode#readme",
+  "homepage": "https://github.com/papastanb/super-opencode#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/superclaude/super-opencode.git"
+    "url": "git+https://github.com/papastanb/super-opencode.git"
+  },
+  "bugs": {
+    "url": "https://github.com/papastanb/super-opencode/issues"
   },
   "keywords": [
     "opencode",
@@ -19,31 +22,48 @@
   ],
   "type": "module",
   "packageManager": "bun@1.3.9",
-  "main": ".opencode/plugins/super-opencode.ts",
+  "main": "./dist/.opencode/plugins/super-opencode.js",
+  "types": "./dist/.opencode/plugins/super-opencode.d.ts",
+  "bin": {
+    "super-opencode": "./scripts/install-project.mjs"
+  },
   "exports": {
-    ".": ".opencode/plugins/super-opencode.ts",
-    "./commands": ".opencode/commands/",
-    "./agents": ".opencode/agents/",
-    "./skills": ".opencode/skills/"
+    ".": {
+      "types": "./dist/.opencode/plugins/super-opencode.d.ts",
+      "import": "./dist/.opencode/plugins/super-opencode.js"
+    },
+    "./package.json": "./package.json"
   },
   "files": [
-    ".opencode/**/*",
-    "docs/**/*.md"
+    "dist/**/*",
+    ".opencode/commands/**/*.md",
+    ".opencode/agents/**/*.md",
+    ".opencode/skills/**/SKILL.md",
+    ".opencode/plugins/**/*.ts",
+    ".opencode/examples/*.json",
+    "docs/instructions/opencode-core.md",
+    "scripts/install-project.mjs",
+    "README.md",
+    "INSTALL.md",
+    "LICENSE"
   ],
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
     "check": "bun run validate:structure && bun run typecheck",
     "typecheck": "tsc --noEmit",
     "validate:structure": "node scripts/validate-structure.mjs",
-    "install:project": "bun run scripts/install-project.mjs",
+    "validate:package": "node scripts/validate-package.mjs",
+    "release:check": "bun run build && bun run validate:package",
+    "install:project": "node scripts/install-project.mjs install",
     "test": "bun test",
     "test:coverage": "bun test --coverage",
-    "lint": "echo 'Linting not configured yet' && exit 1"
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@opencode-ai/plugin": "^1.4.3"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
     "typescript": "^5.9.2"
-  },
-  "peerDependencies": {
-    "@opencode-ai/plugin": "^1.4.0"
   }
 }

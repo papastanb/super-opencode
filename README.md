@@ -1,114 +1,76 @@
 # Super OpenCode
 
-> Portage complet de SuperClaude vers OpenCode - Framework de productivité développeur
+> Installable OpenCode framework that ports key SuperClaude workflows into a reusable project scaffold.
 
 [![CI](https://github.com/papastanb/super-opencode/actions/workflows/ci.yml/badge.svg)](https://github.com/papastanb/super-opencode/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Bun](https://img.shields.io/badge/Bun-1.3.9+-fff.svg?logo=bun)](https://bun.sh)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-3178c6.svg?logo=typescript)](https://www.typescriptlang.org/)
+[![Node](https://img.shields.io/badge/Node-24+-339933.svg?logo=node.js)](https://nodejs.org/)
 
-## Description
+## What It Provides
 
-Super OpenCode est un framework de productivité développeur qui apporte les fonctionnalités de SuperClaude à OpenCode. Il offre un ensemble de commandes, agents, et skills optimisés pour le développement moderne.
+- 28 `/sc-*` commands for common engineering workflows
+- 15 specialist agent prompts
+- 6 reusable mode skills
+- A local OpenCode plugin layer for persistence and compaction hints
+- Serena-first persistence guidance with repo-friendly scaffolding
 
-## Fonctionnalités
+## Runtime Contract
 
-- **28 commandes** `/sc-*` pour toutes les tâches de développement
-- **15 agents spécialisés** (PM, Architecture, Security, etc.)
-- **6 skills de modes** (Brainstorming, Introspection, Deep Research, etc.)
-- **Persistance avancées** avec Serena MCP
-- **Plugin OpenCode** avec hooks pour l'orchestration
-- **Suite de tests** automatisée
+- Node.js 24+
+- Bun 1.3.9+
+- OpenCode
 
-## Démarrage Rapide
+## Install In An Existing OpenCode Project
 
 ```bash
-# Cloner le projet
-git clone https://github.com/papastanb/super-opencode.git
-cd super-opencode
-
-# Installer les dépendances
-bun install
-
-# Vérifier la structure
-bun run check
-
-# Lancer OpenCode
-opencode
+bun add -d super-opencode
+bunx super-opencode install
 ```
 
-Voir [INSTALL.md](INSTALL.md) pour des instructions d'installation détaillées.
+This installs the Super OpenCode scaffold into the current project:
+
+- `.opencode/commands`
+- `.opencode/agents`
+- `.opencode/skills`
+- `.opencode/plugins`
+- `docs/instructions/opencode-core.md`
+
+If `opencode.json` already exists, the installer appends `docs/instructions/opencode-core.md` to the `instructions` array when needed.
+
+## Develop This Repository
+
+```bash
+git clone https://github.com/papastanb/super-opencode.git
+cd super-opencode
+bun install
+bun run check
+bun test
+bun run release:check
+```
+
+## MCP Strategy
+
+- `serena`: required for the full persistence workflow
+- `context7`: optional, recommended for official documentation lookups
+- `sequential`: optional, recommended for structured reasoning
+- `playwright`, `chrome-devtools`, `tavily`, `morph`: optional, task-dependent
+
+The repo config enables `serena` and keeps the other MCPs available but disabled by default. See `.opencode/examples/opencode.example.json` for a fuller setup.
 
 ## Documentation
 
-| Document | Description |
-|----------|-------------|
-| [INSTALL.md](INSTALL.md) | Guide d'installation |
-| [USAGE.md](USAGE.md) | Guide d'utilisation |
-| [COMMANDS.md](COMMANDS.md) | Référence des commandes |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Architecture technique |
+- [INSTALL.md](INSTALL.md): installation details and troubleshooting
+- [USAGE.md](USAGE.md): usage patterns and command examples
+- [COMMANDS.md](COMMANDS.md): command reference
+- [ARCHITECTURE.md](ARCHITECTURE.md): project architecture
 
-## Commandes Disponibles
+## Release Status
 
-- `/sc-brainstorm` - Brainstorming collaboratif
-- `/sc-design` - Conception logicielle
-- `/sc-implement` - Implémentation de code
-- `/sc-analyze` - Analyse de code
-- `/sc-troubleshoot` - Dépannage
-- `/sc-test` - Tests et validation
-- `/sc-document` - Documentation
-- `/sc-research` - Recherche
-- `/sc-task` - Gestion de tâches
-- `/sc-workflow` - Orchestration de workflows
-- `/sc-agent` - Sélection d'agent
-- `/sc-pm` - Gestion de projet
-- `/sc-help` - Aide et documentation
-- `/sc-recommend` - Recommandations
-- `/sc-index` - Indexation de projet
-- `/sc-index-repo` - Indexation de repository
-- `/sc-save` - Sauvegarde de session
-- `/sc-load` - Chargement de session
-- `/sc-reflect` - Réflexion sur le travail
-- `/sc-estimate` - Estimation de tâches
-- `/sc-build` - Build de projet
-- `/sc-improve` - Amélioration de code
-- `/sc-cleanup` - Nettoyage de code
-- `/sc-explain` - Explication de code
-- `/sc-git` - Opérations Git
-- `/sc-select-tool` - Sélection d'outil MCP
-- `/sc-spawn` - Orchestration méta-système
-- `/sc-business-panel` - Panel d'experts business
+This repository is the source and development home for Super OpenCode.
 
-Voir [COMMANDS.md](COMMANDS.md) pour la référence complète.
-
-## MCP Supportés
-
-| MCP | Status | Description |
-|-----|--------|-------------|
-| **serena** | ✅ Requis | Persistance et mémoire |
-| **context7** | ✅ Recommandé | Documentation framework |
-| **sequential** | ✅ Recommandé | Raisonnement complexe |
-| **playwright** | ⚪ Optionnel | Tests navigateur |
-| **tavily** | ⚪ Optionnel | Recherche web |
-| **morph** | ⚪ Optionnel | Édition rapide |
-
-## Technologies
-
-- **Runtime**: Bun 1.3.9+
-- **Language**: TypeScript 5.9+
-- **Plugin SDK**: @opencode-ai/plugin 1.4.0+
-- **Tests**: Bun test
-
-## Contribution
-
-Les contributions sont les bienvenues ! Voir [CONTRIBUTING.md](CONTRIBUTING.md).
+The npm package is intended to scaffold Super OpenCode into existing OpenCode projects. Internal planning files under `docs/memory/` are not part of the published package contract.
 
 ## License
 
-MIT License - voir [LICENSE](LICENSE)
-
-## Liens Utiles
-
-- [Documentation OpenCode](https://docs.opencode.ai)
-- [SuperClaude Original](https://github.com/superclaude/superclaude)
-- [Serena MCP](https://github.com/oraios/serena)
+MIT. See [LICENSE](LICENSE).
