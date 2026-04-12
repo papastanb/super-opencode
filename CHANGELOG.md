@@ -5,87 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Reframed the npm package as an installable scaffold for existing OpenCode projects rather than a raw mirror of this repository.
+- Aligned public documentation around the current runtime contract: Node.js 24+, Bun 1.3.9+, and OpenCode.
+- Clarified that `/sc-*` commands keep explicit boundaries while still allowing dynamic recommendation and routing instead of a rigid command mapping.
+
+### Fixed
+
+- Hardened npm packaging with a TypeScript build to `dist/` and valid package exports.
+- Moved `@opencode-ai/plugin` to runtime dependencies so the published package remains consumable.
+- Added release validation with `bun run release:check`.
+- Updated CI to modern GitHub Actions and Node 24.
+
+### Added
+
+- `super-opencode install` scaffold flow for copying runtime assets into an existing OpenCode project.
+- Public-facing English docs for installation, usage, architecture, commands, and contribution guidance.
+- Plugin hook tests covering the scaffolded runtime behavior.
+- `CODE_OF_CONDUCT.md`.
+
 ## [1.0.0] - 2026-04-11
 
 ### Added
 
-**Core Framework**
-- 28 `/sc-*` commands ported from SuperClaude
-- 15 specialized agents (pm-agent, system-architect, frontend-architect, etc.)
-- 6 mode-support skills (sc-brainstorming, sc-introspection, sc-deep-research, sc-task-management, sc-orchestration, sc-token-efficiency)
-
-**Persistence**
-- Serena MCP integration as primary persistence layer
-- Plugin hooks for automatic checkpoint hints
-- Command hints for persistence commands (sc-pm, sc-save, sc-load, sc-reflect)
-- Hierarchical task memory schema (plan → phase → task → todo)
-
-**Plugin Engine**
-- System hooks for persistence contract injection
-- Command hooks for hints before execution
-- Compaction hooks for session context preservation
-- Auto-checkpoint template and hints
-
-**Packaging**
-- Complete package.json with exports and peerDependencies
-- Cross-platform validation script
-- Installation project script
-- Example configurations
-
-**Tests**
-- Bun test suite for framework structure validation (15 tests)
-
-**Documentation**
-- README.md, INSTALL.md, USAGE.md, COMMANDS.md, ARCHITECTURE.md
-- CONTRIBUTING.md, LICENSE
-- CodeRabbit configuration (.coderabbit.yaml)
-
-### Features
-
-- Phase 0: Foundation - TypeScript/Bun project setup
-- Phase 1: Core Compatibility - Commands, agents, skills, MCP config
-- Phase 2: Behavioral Reconstruction - Enhanced modes with upstream behaviors
-- Phase 3: Plugin Engine - Hooks, persistence, checkpoints
-- Phase 4: Advanced Features - sc-spawn, sc-recommend
-- Phase 5: Packaging - npm-ready, cross-platform validated, CI/CD
-
-### Commands Added
-
-| Category | Commands |
-|----------|----------|
-| Workflow | sc-brainstorm, sc-design, sc-implement |
-| Diagnostic | sc-analyze, sc-troubleshoot |
-| Quality | sc-test, sc-document, sc-improve, sc-cleanup |
-| Research | sc-research, sc-explain, sc-estimate |
-| Orchestration | sc-task, sc-workflow, sc-agent, sc-spawn |
-| PM | sc-pm, sc-help, sc-recommend, sc-index, sc-index-repo |
-| Persistence | sc-save, sc-load, sc-reflect |
-| Utility | sc-build, sc-git, sc-select-tool, sc-business-panel |
-
-### MCP Configuration
-
-| MCP | Status | Description |
-|-----|--------|-------------|
-| serena | ✅ Enabled | Required for persistence |
-| context7 | ✅ Recommended | Documentation |
-| sequential | ✅ Recommended | Reasoning |
-| playwright | ⚪ Optional | Testing |
-| tavily | ⚪ Optional | Research |
-| morph | ⚪ Optional | Fast edits |
-
-### Dependencies
-
-- @opencode-ai/plugin: ^1.4.0 (peer)
-- bun: 1.3.9+
-- typescript: ^5.9.2
-- @types/node: ^24.3.0
-
----
+- Initial Super OpenCode framework release with 28 `/sc-*` commands.
+- Specialist agent prompts under `.opencode/agents/`.
+- Mode support skills under `.opencode/skills/`.
+- Serena-first persistence guidance and plugin hook scaffolding.
+- Repository documentation, examples, tests, and packaging foundation.
 
 ## [0.1.0] - 2026-04-10
 
 ### Added
 
-- Initial project scaffolding
-- Basic command structure
-- README and ARCHITECTURE documentation
+- Initial project scaffolding.
+- Basic command structure.
+- Early repository documentation.

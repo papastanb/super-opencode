@@ -4,8 +4,8 @@
 
 - Project: Super OpenCode
 - Goal: portage complet de SuperClaude vers OpenCode
-- Current phase: Phase 1 core compatibility en execution avancee
-- Overall status: Serena integre comme couche de persistance source de verite
+- Current phase: hardening pre-publication et packaging npm
+- Overall status: release hardening principal termine, base publique alignee sur `main`
 
 ## Done
 
@@ -33,21 +33,27 @@
 - activation reelle de Serena dans `opencode.json`
 - validation runtime de Serena via `opencode mcp list`
 - refactor du plugin local pour injecter le contrat de persistance Serena
+- integration d'une directive globale OpenCode dans `C:/Users/P52/.config/opencode/AGENTS.md`
+- bascule de la branche par defaut GitHub vers `main`
+- mise a jour de la CI vers Node 24 (`actions/checkout@v6`, `actions/setup-node@v6`, `oven-sh/setup-bun@v2`)
+- suppression du job PR fragile de labellisation
+- correction du packaging npm avec build TS -> `dist/` et `exports` valides
+- passage de `@opencode-ai/plugin` en dependance runtime
+- ajout d'un installateur CLI `super-opencode install`
+- ajout d'une validation de release package via `bun run release:check`
+- reecriture publique de `README.md` et `INSTALL.md` en anglais
+- ajout de `CODE_OF_CONDUCT.md`
+- ajout de tests plugin hooks et validation locale reussie (`bun test`, `bun run release:check`)
+- corrections committees et poussees sur `main` et `release/v1.0.0`
 
 ## In Progress
 
-- extension Phase 1 terminee avec 28 commandes (19 originales + 9 backlog)
-- validation `bun run check` reussie pour toutes les commandes
-- Phase 2 terminee: 6 skills enhance avec comportements upstream
-- Phase 3 terminee: plugin engine avec hooks et persistance avancee
-- Phase 4 terminee: sc-spawn et sc-recommend prets
-- Phase 5 terminee: packaging et cross-platform validation prets
+- arbitrage restant sur le role de `agent: build` comme routeur vs frontmatters specialises
 
 ## Next
 
-- Projet pret pour publication publique
-- A decidir: timing de publication npm
-- Repository GitHub: pret pour passage en public
+- preparer le commit de la vague finale de polish public
+- decider du moment exact de publication npm et de mise en public du repo
 
 ## Risks
 
@@ -55,8 +61,12 @@
 - la persistance avancee V1 demandera un design stable des le debut
 - ne pas introduire trop tot des plugins tiers qui doublonnent les features coeur du framework
 - `opencode mcp list` expose aussi un `morph-mcp` global connecte hors config projet, a garder a l'oeil pour eviter les confusions de surface outil
+- le fichier global `C:/Users/P52/.config/opencode/opencode.json` contient encore une cle Morph en clair, a assainir avant exposition plus large de l'environnement
 
 ## Session Handoff
 
-- raison de la pause precedente: redemarrage OpenCode pour recharger le contexte avec skills/plugins/LSP installes
-- etat actuel: Phase 1 etendue terminee avec 28 commandes, toutes validees, prochain travail sur validation cas reels puis arbitrage Phase 2
+- checkpoint release/public effectue apres corrections CI, packaging npm et installation
+- les docs publiques restantes (`CONTRIBUTING.md`, `COMMANDS.md`, `USAGE.md`, `ARCHITECTURE.md`, `CHANGELOG.md`) ont ete realignees en anglais
+- `.opencode/README.md` a ete retire du package surface et `bun run release:check` repasse
+- revue finale go/no-go effectuee: pas de bloqueur detecte sur le package, la doc publique ou la validation locale
+- etat actuel: package et documentation publique alignes, base prete pour commit puis publication

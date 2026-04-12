@@ -2,7 +2,7 @@
 
 ## Mission
 
-Porter SuperClaude vers OpenCode sous forme d'un framework installable, cross-platform, structure pour une future publication publique.
+Porter SuperClaude vers OpenCode sous forme d'un framework installable et structure pour une future publication publique.
 
 ## Regles de contexte
 

@@ -1,178 +1,144 @@
 # Architecture
 
-## Vue d'Ensemble
+## Overview
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     Super OpenCode                          │
-├─────────────────────────────────────────────────────────────┤
-│  User → Commands (/sc-*) → Agents → Skills → MCP/Plugins  │
-└─────────────────────────────────────────────────────────────┘
-```
+Super OpenCode is an installable scaffold for OpenCode projects.
 
-## Couches Techniques
+It packages a set of command prompts, agent prompts, mode skills, and a local plugin layer that together port key SuperClaude workflow ideas into the OpenCode ecosystem.
 
-### 1. Instruction Layer
+At runtime, the high-level flow is:
 
-Contient les règles, conventions et documentation de comportement.
-
-- `AGENTS.md` - Instructions globales
-- `docs/instructions/opencode-core.md` - Instructions spécifiques OpenCode
-
-### 2. Command Layer (`/sc-*`)
-
-Expose les workflows utilisateur via des commandes OpenCode.
-
-| Catégorie | Commandes |
-|----------|-----------|
-| Workflow | `/sc-brainstorm`, `/sc-design`, `/sc-implement` |
-| Diagnostic | `/sc-analyze`, `/sc-troubleshoot` |
-| Qualité | `/sc-test`, `/sc-document`, `/sc-improve`, `/sc-cleanup` |
-| Recherche | `/sc-research`, `/sc-explain`, `/sc-estimate` |
-| Orchestration | `/sc-task`, `/sc-workflow`, `/sc-agent`, `/sc-spawn` |
-| PM | `/sc-pm`, `/sc-recommend`, `/sc-business-panel` |
-| Persistance | `/sc-save`, `/sc-load`, `/sc-reflect` |
-| Index | `/sc-index`, `/sc-index-repo` |
-| Outils | `/sc-build`, `/sc-git`, `/sc-select-tool` |
-
-Cette couche vit dans `.opencode/commands/`.
-
-### 3. Agent Layer
-
-Agents spécialisés inspirés de SuperClaude.
-
-| Agent | Domaine |
-|-------|---------|
-| pm-agent | Gestion de projet et orchestration |
-| system-architect | Architecture système |
-| backend-architect | Architecture backend |
-| frontend-architect | Architecture frontend |
-| devops-architect | Infrastructure et DevOps |
-| security-engineer | Sécurité |
-| performance-engineer | Performance |
-| root-cause-analyst | Analyse de problèmes |
-| quality-engineer | Qualité et tests |
-| refactoring-expert | Refactoring |
-| python-expert | Python |
-| requirements-analyst | Analyse des besoins |
-| technical-writer | Documentation |
-| learning-guide | Apprentissage |
-| deep-research-agent | Recherche |
-
-Cette couche vit dans `.opencode/agents/`.
-
-### 4. Skill Layer
-
-Skills chargeables pour les comportements mode.
-
-| Skill | Usage |
-|-------|-------|
-| sc-brainstorming | Brainstorming collaboratif |
-| sc-introspection | Réflexion et analyse |
-| sc-deep-research | Recherche structurée |
-| sc-task-management | Gestion de tâches |
-| sc-orchestration | Orchestration |
-| sc-token-efficiency | Efficacité tokens |
-
-Cette couche vit dans `.opencode/skills/`.
-
-### 5. MCP Integration Layer
-
-Configuration des MCP dans `opencode.json`.
-
-| MCP | Status | Usage |
-|-----|--------|-------|
-| serena | ✅ Requis | Persistance et mémoire |
-| context7 | ✅ Recommandé | Documentation |
-| sequential | ✅ Recommandé | Raisonnement |
-| playwright | ⚪ Optionnel | Tests navigateur |
-| tavily | ⚪ Optionnel | Recherche web |
-| morph | ⚪ Optionnel | Édition rapide |
-
-### 6. Plugin Layer
-
-Plugin principal dans `.opencode/plugins/super-opencode/`.
-
-**Modules :**
-- `system.ts` - Hooks système (persistence contract)
-- `commands.ts` - Hooks de commandes (hints)
-- `compaction.ts` - Hooks de compaction (checkpoint)
-- `memory.ts` - Utilitaires et contrats
-
-### 7. Custom Tools Layer
-
-Outils spécifiques dans `.opencode/tools/`.
-
-## Flux d'Exécution
-
-```
-1. opencode → charge opencode.json, AGENTS.md, .opencode/*
-2. /sc-* command → sélectionne agent + skill
-3. Agent exécuté → utilise MCP si besoin
-4. Plugin capturen → événements pour persistance
-5. Résultat → retourne à l'utilisateur
+```text
+User request
+  -> /sc-* command
+  -> optional routing to an agent or skill
+  -> optional MCP usage
+  -> plugin hooks for guidance and persistence hints
 ```
 
-## Technologies
+## Main Layers
 
-| Composant | Technologie |
-|-----------|-------------|
-| Runtime | Bun 1.3.9+ |
-| Langage | TypeScript 5.9+ |
-| Plugin SDK | @opencode-ai/plugin 1.4.0+ |
-| Tests | Bun test |
-| CI/CD | GitHub Actions |
+### Instruction Layer
 
-## Structure des Fichiers
+Defines repo and framework behavior.
 
-```
+- `AGENTS.md`
+- `docs/instructions/opencode-core.md`
+
+### Command Layer
+
+Lives in `.opencode/commands/`.
+
+This is the primary user-facing surface. Commands define boundaries such as plan-only, diagnose-only, or execute changes.
+
+The command layer is intentionally not a rigid one-command-per-intent router. Some commands enter through a generic `build` agent and then route more precisely from there.
+
+### Agent Layer
+
+Lives in `.opencode/agents/`.
+
+These prompts represent specialist viewpoints such as architecture, performance, quality, security, root-cause analysis, research, and project management.
+
+`pm-agent` is the continuity specialist and is the preferred agent when session state, progress tracking, or documentation continuity matters.
+
+### Skill Layer
+
+Lives in `.opencode/skills/`.
+
+Current packaged skills:
+
+- `sc-brainstorming`
+- `sc-introspection`
+- `sc-deep-research`
+- `sc-task-management`
+- `sc-orchestration`
+- `sc-token-efficiency`
+
+These provide minimal but explicit support for the corresponding SuperClaude-inspired modes.
+
+### Plugin Layer
+
+Lives in `.opencode/plugins/`.
+
+The plugin layer provides local behavior for:
+
+- persistence guidance
+- command hints
+- compaction/checkpoint hints
+- shared runtime glue
+
+This is part of the scaffolded OpenCode project contract, not just internal repo code.
+
+### MCP Layer
+
+Configured through `opencode.json` in the consuming project.
+
+Expected strategy:
+
+- `serena`: required for the full persistence workflow
+- `context7`: recommended
+- `sequential`: recommended
+- `playwright`, `chrome-devtools`, `tavily`, `morph`: optional
+
+Super OpenCode is designed to degrade gracefully when optional MCPs are absent. Serena is the main exception because it underpins the intended persistence model.
+
+## Published Package Surface
+
+The npm package is designed to scaffold the runtime assets a consuming OpenCode project needs:
+
+- `.opencode/commands/**/*.md`
+- `.opencode/agents/**/*.md`
+- `.opencode/skills/**/SKILL.md`
+- `.opencode/plugins/**/*.ts`
+- `.opencode/examples/*.json`
+- `docs/instructions/opencode-core.md`
+- installer script and package metadata
+
+Repo-internal planning and memory files are not part of the public package contract.
+
+## Runtime Contract
+
+- Node.js 24+
+- Bun 1.3.9+
+- OpenCode
+
+The public contract is intentionally modest: the package ships OpenCode scaffold assets plus a local plugin layer, and does not rely on a standalone executable runtime of its own.
+
+## Design Principles
+
+- preserve command boundaries
+- prefer OpenCode-native primitives before extra plugin logic
+- route dynamically when that improves outcomes
+- keep Serena as the persistence source of truth when available
+- keep public package behavior separate from repo-only planning state
+
+## Repository Layout
+
+```text
 super-opencode/
-├── .opencode/
-│   ├── commands/      # 28 commandes /sc-*
-│   ├── agents/        # 15 agents
-│   ├── skills/        # 6 skills
-│   ├── plugins/       # Plugin principal
-│   └── tools/         # Outils custom
-├── docs/
-│   ├── memory/       # Mémoire projet
-│   └── instructions/  # Instructions
-├── scripts/           # Scripts utilitaires
-├── tests/             # Tests
-├── opencode.json      # Configuration
-└── package.json       # Package npm
+  .opencode/
+    commands/
+    agents/
+    skills/
+    plugins/
+    examples/
+  docs/
+    instructions/
+    memory/
+  scripts/
+  tests/
+  package.json
+  opencode.json
 ```
 
-## Conventions
+## Validation
 
-- **Commandes** : `/sc-*` (slash + sc + nom)
-- **Agents** : kebab-case (pm-agent, system-architect)
-- **Skills** : snake_case (sc_brainstorming)
-- **Persistance** : Serena MCP comme source de vérité
-
-## Patterns
-
-### Command → Agent → Skill → MCP
+The current release-oriented checks are:
 
 ```bash
-/sc-implement "feature X"
-  → agent: build
-  → skill: sc-orchestration
-  → MCP: serena (persistence), context7 (docs)
+bun run check
+bun test
+bun run release:check
 ```
 
-### Persistance
-
-```bash
-/sc-save → write_memory("pm_context", state)
-/sc-load → read_memory("pm_context") → restore
-/sc-reflect → read_memory("current_plan") → analyze
-```
-
-## Décisions Structurantes
-
-- Runtime: Bun + TypeScript
-- Package: npm (prêt pour publication)
-- Plateforme: Windows, macOS, Linux
-- Commandes: `/sc-*`
-- Fidélité: Compatibilité fonctionnelle forte
-- Persistance: Avancée (Serena) dès V1
+`bun run release:check` is the package integrity gate because it rebuilds the package and validates the published surface.

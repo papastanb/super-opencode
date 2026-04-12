@@ -65,7 +65,7 @@ async function checkStructure() {
 }
 
 async function main() {
-  console.log('🔍 Cross-Platform Validation\n')
+  console.log('Scaffold validation\n')
   
   const result = await checkStructure()
   

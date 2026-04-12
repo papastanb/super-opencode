@@ -35,7 +35,7 @@ jobs:
       - name: Run tests
         run: bun test
 
-      - name: Cross-platform validation
+      - name: Scaffold validation
         run: bun scripts/validate-cross-platform.mjs
 
       - name: Release package validation
@@ -53,7 +53,7 @@ jobs:
           echo "✅ TypeScript: Passed" >> $GITHUB_STEP_SUMMARY
           echo "✅ Structure: Passed" >> $GITHUB_STEP_SUMMARY
           echo "✅ Tests: Passed" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Cross-platform: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Scaffold validation: Passed" >> $GITHUB_STEP_SUMMARY
           echo "✅ Package release checks: Passed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Ready for agent review (Qodo, Devin, CodeRabbit)" >> $GITHUB_STEP_SUMMARY

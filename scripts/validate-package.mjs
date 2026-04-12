@@ -21,7 +21,7 @@ if (typeof pluginModule.SuperOpenCodePlugin !== 'function') {
   process.exit(1)
 }
 
-const rawPackOutput = execSync(`${npmCommand} pack --dry-run --json`, {
+const rawPackOutput = execSync(`${npmCommand} pack --dry-run --json --loglevel=error`, {
   cwd: root,
   encoding: 'utf8',
   shell: true,
@@ -31,11 +31,19 @@ const packSummary = JSON.parse(rawPackOutput)
 const packedFiles = Array.isArray(packSummary) ? packSummary[0]?.files ?? [] : []
 const packedPaths = packedFiles.map((entry) => entry.path)
 const forbiddenPrefixes = ['docs/memory/', '.opencode/package-lock.json', '.opencode/package.json']
+const forbiddenPaths = ['.opencode/README.md']
 
 for (const prefix of forbiddenPrefixes) {
   const offendingPath = packedPaths.find((candidate) => candidate.startsWith(prefix))
   if (offendingPath) {
     console.error(`Forbidden file detected in package: ${offendingPath}`)
+    process.exit(1)
+  }
+}
+
+for (const forbiddenPath of forbiddenPaths) {
+  if (packedPaths.includes(forbiddenPath)) {
+    console.error(`Forbidden file detected in package: ${forbiddenPath}`)
     process.exit(1)
   }
 }

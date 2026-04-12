@@ -1,113 +1,82 @@
 # Contributing to Super OpenCode
 
-## Bienvenue !
+Thanks for contributing.
 
-Merci de votre intérêt pour Super OpenCode. Ce document vous guidera pour contribuer au projet.
+## Before You Start
 
-## Code de Conduite
+- Read `README.md` for the public package scope.
+- Read `AGENTS.md` for repo-specific working rules.
+- Keep the main files short and move detailed implementation notes into `docs/memory/` when they are project-internal.
 
-En contribuant, vous acceptez de respecter le [Code de Conduite](CODE_OF_CONDUCT.md) (à créer si nécessaire).
+## Contribution Scope
 
-## Comment Contribuer
+This repository has two roles:
 
-### Signaler des Bugs
+- the source repository for developing Super OpenCode
+- the npm package that scaffolds Super OpenCode assets into existing OpenCode projects
 
-1. Vérifiez si le bug n'existe pas déjà dans les [Issues](https://github.com/papastanb/super-opencode/issues)
-2. Créez une issue avec le template suivant :
-```markdown
-## Bug Description
-Description claire du bug.
+When contributing, keep the published package contract separate from repo-only planning or memory files.
 
-## Steps to Reproduce
-1. ...
-2. ...
+## Reporting Issues
 
-## Expected Behavior
-Ce qui devrait se passer.
+Open a GitHub issue and include:
 
-## Environment
-- OS: 
-- Bun version:
-- OpenCode version:
-```
+- what you tried
+- what happened
+- what you expected
+- your environment: OS, Node version, Bun version, OpenCode version
 
-### Proposer des Features
+If the issue is about installation, include whether you ran `bunx super-opencode install` inside an existing OpenCode project.
 
-1. Créez une issue avec le标签 `enhancement`
-2. Décrivez la feature proposée
-3. Expliquez pourquoi elle serait utile
+## Pull Requests
 
-### Pull Requests
+1. Fork the repository.
+2. Create a topic branch from `main`.
+3. Make the smallest correct change.
+4. Add or update tests when behavior changes.
+5. Update public docs when the package contract or user-facing behavior changes.
+6. Run the relevant checks.
+7. Open a pull request with a clear rationale.
 
-1. Fork le projet
-2. Créez une branche : `git checkout -b feature/ma-feature`
-3. Faites vos changements
-4. Ajoutez des tests si pertinent
-5. Vérifiez que tout passe : `bun run check && bun test`
-6. Committez avec des messages clairs
-7. Poussez et créez une PR
+## Validation
 
-## Standards de Code
-
-### Style
-
-- **TypeScript** : Suivre les conventions du projet
-- **YAML** : Validateur strict pour les configs
-- **Markdown** : Limiter les lignes à 100 caractères
-
-### Conventions de Commit
-
-Utilisez [Conventional Commits](https://www.conventionalcommits.org/) :
+Run the checks that match your change:
 
 ```bash
-git commit -m "feat: ajout nouvelle commande sc-feature"
-git commit -m "fix: correction du bug dans sc-pm"
-git commit -m "docs: mise à jour README"
-git commit -m "test: ajout tests pour plugin"
-```
-
-### Types de Commit
-
-| Type | Description |
-|------|-------------|
-| feat | Nouvelle fonctionnalité |
-| fix | Correction de bug |
-| docs | Documentation |
-| style | Formatage (sans changement de logique) |
-| refactor | Refactoring |
-| test | Tests |
-| chore | Maintenance |
-
-## Processus de Review
-
-1. Les PRs doivent passer les checks CI
-2. Les agents de review (Qodo, Devin, CodeRabbit) analyseront automatiquement
-3. Au moins une approbation requise avant merge
-
-## Tests
-
-```bash
-# Lancer tous les tests
-bun test
-
-# Lancer avec coverage
-bun test --coverage
-
-# Vérifier la structure
 bun run check
+bun test
+bun run release:check
 ```
 
-## Documentation
+Use `bun run release:check` for anything that could affect the published package, installer, or package metadata.
 
-- Mettre à jour la documentation pour les changements d'API
-- Ajouter des exemples si pertinent
-- Vérifier les liens
+## Code Guidelines
 
-## Questions ?
+- TypeScript is the main implementation language.
+- Prefer minimal, direct changes over speculative abstractions.
+- Preserve command boundaries: planning commands plan, implementation commands implement, diagnostic commands diagnose.
+- Do not hard-code a rigid `/sc-*` mapping where the framework is intended to recommend or route dynamically.
+- Document why when behavior would otherwise be unclear.
 
-- Ouvrez une issue avec le标签 `question`
-- Utilisez les discussions GitHub
+## Commit Messages
 
-## Merci !
+Conventional Commits are preferred.
 
-Votre contribution est appréciée ! 🚀
+Examples:
+
+```bash
+git commit -m "feat: add installer support for project config updates"
+git commit -m "fix: harden package exports for npm release"
+git commit -m "docs: align public usage guides with current command routing"
+```
+
+## Review Expectations
+
+- CI should pass.
+- User-facing claims should match the actual package behavior.
+- Public docs should stay in English.
+- Repo-internal memory files should not be treated as published API.
+
+## Community Standards
+
+By participating, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).

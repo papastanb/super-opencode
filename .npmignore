@@ -1,10 +1,5 @@
-.tmp-install-test/
 .opencode/README.md
-.opencode/**/.gitkeep
-.opencode/package.json
-.opencode/package-lock.json
-.opencode/bun.lock
 docs/memory/
-upstream-superclaude/
-pr-body.md
-pr-body-v2.md
+tests/
+coverage/
+*.log

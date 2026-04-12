@@ -1,182 +1,106 @@
-# Guide d'Utilisation
+# Usage Guide
 
-## Démarrage
+Super OpenCode is intended to be installed into an existing OpenCode project.
 
-### Lancer OpenCode
+## Start OpenCode
 
 ```bash
 opencode
 ```
 
-### Obtenir de l'Aide
+## First Commands To Know
 
 ```bash
 /sc-help
+/sc-recommend "I need to debug a failing release workflow"
+/sc-pm
 ```
 
-Affiche la liste de toutes les commandes disponibles avec leurs descriptions.
+Use `/sc-recommend` when you want the framework to choose a good path instead of forcing a fixed command sequence.
 
-## Commandes Essentielles
+## Common Usage Patterns
 
-### Gestion de Projet
+### Explore A New Problem
 
 ```bash
-/sc-pm          # Afficher le contexte de gestion de projet
-/sc-save        # Sauvegarder l'état de la session actuelle
-/sc-load        # Charger une session sauvegardée
-/sc-reflect     # Réflexion sur l'avancement du travail
+/sc-brainstorm "ways to add tenant-aware billing"
+/sc-design "tenant-aware billing model"
 ```
 
-### Workflow de Développement
+### Implement A Change
 
 ```bash
-/sc-brainstorm  # Brainstorming pour idées nouvelles
-/sc-design      # Conception d'une fonctionnalité
-/sc-implement   # Implémentation de code
-/sc-analyze     # Analyse de code existant
-/sc-troubleshoot # Dépannage et résolution de bugs
+/sc-implement "add tenant-aware billing"
+/sc-test "validate tenant-aware billing"
 ```
 
-### Qualité et Tests
+### Investigate A Bug
 
 ```bash
-/sc-test       # Générer et exécuter des tests
-/sc-document   # Créer de la documentation
-/sc-improve    # Améliorer le code existant
-/sc-cleanup    # Nettoyer le code (dead code, imports inutiles)
+/sc-troubleshoot "checkout fails after login refresh"
+/sc-analyze "auth and checkout interaction"
 ```
 
-### Recherche et Analyse
+### Work From A Complex Goal
 
 ```bash
-/sc-research   # Recherche approfondie sur un sujet
-/sc-estimate   # Estimer le temps de développement
-/sc-explain    # Expliquer du code ou des concepts
+/sc-workflow "migrate the plugin packaging flow"
+/sc-task "track the migration work"
 ```
 
-### Opérations Spéciales
+`/sc-workflow` plans only. `/sc-task` helps structure execution. `/sc-implement` is the command that should actually make code changes.
+
+## Agents And Routing
+
+You can ask the framework to route dynamically:
 
 ```bash
-/sc-git        # Opérations Git intelligentes
-/sc-build      # Build du projet
-/sc-spawn      # Décomposition de tâche complexe
-/sc-business-panel # Panel d'experts business
+/sc-agent "who should review our persistence approach?"
 ```
 
-## Patterns d'Utilisation
-
-### Session de Travail Typique
-
-1. **Démarrage**
-   ```bash
-   opencode
-   /sc-pm          # Restaurer le contexte
-   ```
-
-2. **Tâche de Développement**
-   ```bash
-   /sc-design "implémenter feature X"
-   /sc-implement "feature X"
-   /sc-test "feature X"
-   ```
-
-3. **Sauvegarde**
-   ```bash
-   /sc-save       # Sauvegarder avant de quitter
-   ```
-
-### Utilisation des Agents
-
-Chaque commande utilise un agent spécialisé. Vous pouvez aussi invoquer des agents directement :
+Or call for a recommendation first:
 
 ```bash
-/sc-agent system-architect   # Consulter l'architecte système
-/sc-agent security-engineer  # Consulter l'expert sécurité
+/sc-recommend "I need to document and validate a new installer flow"
 ```
 
-### Utilisation des Skills
+Super OpenCode intentionally preserves flexible routing. Not every request should map to a single fixed `/sc-*` command.
 
-某些 commandes chargent automatiquement des skills :
+## Persistence Workflow
 
-```bash
-# Charge sc-orchestration automatiquement
-/sc-task "tâche complexe"
-/sc-build "projet"
-
-# Charge sc-introspection automatiquement
-/sc-troubleshoot "bug"
-/sc-analyze "code complexe"
-```
-
-## Persistance et Sessions
-
-### Sauvegarder une Session
+Super OpenCode is Serena-first for persistence when Serena is available.
 
 ```bash
 /sc-save
-```
-
-Cela sauvegardera dans Serena :
-- Contexte actuel (pm_context)
-- Plan en cours (current_plan)
-- Prochaines actions (next_actions)
-
-### Reprendre une Session
-
-```bash
 /sc-load
-```
-
-Restaure le contexte depuis Serena.
-
-### Réflexion
-
-```bash
 /sc-reflect
 ```
 
-Analyse la tâche en cours et documente les décisions.
+Typical uses:
 
-## Tips et Astuces
+- `/sc-save` before a major refactor or compaction
+- `/sc-load` when resuming a prior session
+- `/sc-reflect` to summarize current progress and next actions
 
-### Sélection d'Outil Automatique
+## MCP Expectations
 
-```bash
-/sc-select-tool "opération complexe"
-```
+- `serena`: required for the full persistence workflow
+- `context7`: recommended for official documentation lookup
+- `sequential`: recommended for structured reasoning
+- `playwright`, `chrome-devtools`, `tavily`, `morph`: optional and task-dependent
 
-Analyse automatiquement la meilleure工具 (Serena vs Morph).
+If Serena is unavailable, Super OpenCode can still operate in a degraded mode, but session continuity will be weaker.
 
-### Orchestration de Tâches
+## Practical Tips
 
-Pour les projets complexes :
+- Start with `/sc-recommend` when the right path is unclear.
+- Use `/sc-workflow` for plans and `/sc-implement` for execution.
+- Use `/sc-troubleshoot` when the main need is diagnosis rather than code changes.
+- Use `/sc-document` whenever behavior changes would otherwise be opaque.
+- Use `/sc-save` before context-heavy milestones.
 
-```bash
-/sc-spawn "implémenter fonctionnalité complète"
-```
+## Related Docs
 
-Décompose en sous-tâches deleguables aux autres commandes.
-
-### Recherche Rapide
-
-```bash
-/sc-index           # Indexer le projet
-/sc-index-repo     # Indexer le repository
-```
-
-## Dépannage Rapide
-
-| Problème | Solution |
-|----------|----------|
-| Commande non reconnue | Utiliser `/sc-help` |
-| Contexte perdu | `/sc-load` pour restaurer |
-| Session longue | `/sc-save` régulièrement |
-| Erreur MCP | Vérifier `opencode mcp list` |
-
-## Bonnes Pratiques
-
-1. **Toujours sauvegarder** avant de quitter (`/sc-save`)
-2. **Utiliser `/sc-pm`** au début de chaque session
-3. **Décomposer les tâches complexes** avec `/sc-spawn`
-4. **Utiliser les agents spécialisés** pour les questions domain-specific
-5. **Activer les skills** via les commandes qui les chargent automatiquement
+- `INSTALL.md` for installation details
+- `COMMANDS.md` for the command catalog
+- `ARCHITECTURE.md` for how commands, agents, skills, and plugins fit together
