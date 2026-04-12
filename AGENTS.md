@@ -11,6 +11,10 @@ Porter SuperClaude vers OpenCode sous forme d'un framework installable, cross-pl
 - Ne charger un fichier secondaire que si la tache l'exige.
 - Mettre a jour la memoire au fil de l'eau, pas en fin de sprint.
 - Avant toute compaction, appliquer le protocole de checkpoint de `docs/memory/sessions/README.md`.
+- Utiliser le plus petit ensemble pertinent de skills, sous-agents, MCPs et options/flags qui ameliore materiellement la qualite d'execution.
+- Charger d'abord les skills de processus, puis les skills metier ou d'implementation.
+- Utiliser les MCPs quand ils apportent un gain reel de validation, documentation officielle, exploration, raisonnement, persistance ou confiance de release.
+- Si un skill ou MCP prefere est indisponible, expliciter la degradation et utiliser la meilleure alternative.
 
 ## Ordre de lecture par defaut
 

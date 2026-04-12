@@ -10,8 +10,10 @@ const requiredPaths = [
   "opencode.json",
   "package.json",
   "tsconfig.json",
-  ".opencode/package.json",
   ".opencode/plugins/super-opencode.ts",
+  ".opencode/commands",
+  ".opencode/agents",
+  ".opencode/skills",
 ]
 
 const missing = requiredPaths.filter((path) => !existsSync(path))

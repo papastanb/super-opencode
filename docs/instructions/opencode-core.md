@@ -16,6 +16,16 @@ The behavioral source to interpret and port is the upstream SuperClaude framewor
 - For complex work, create and maintain TodoWrite state.
 - For repo exploration, prefer `glob`, `grep`, `read`, `explore`, and local upstream references before speculation.
 
+## Tooling Directive
+
+- Use the smallest relevant set of skills, subagents, MCPs, and tool options or flags that materially improves execution quality.
+- Load process skills first when they apply, then load domain or implementation skills.
+- Use MCPs whenever they add meaningful gains in validation, official documentation, exploration, reasoning, persistence, or release confidence.
+- Use options, modes, and flags when they improve reliability or clarity, not decoratively.
+- If a preferred skill or MCP is unavailable, state the degradation explicitly and use the best available fallback.
+- For complex tasks, combine exploration, official documentation, structured reasoning, persistence, validation, and synthesis proactively when useful.
+- Prefer precision, traceability, and robustness over a superficially minimal workflow.
+
 ## Command Family
 
 The first command family is exposed as `/sc-*`.

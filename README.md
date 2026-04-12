@@ -1,23 +1,76 @@
 # Super OpenCode
 
-Portage complet de SuperClaude vers OpenCode, avec une cible V1 privee mais structuree pour une future publication publique.
+> Installable OpenCode framework that ports key SuperClaude workflows into a reusable project scaffold.
 
-## Objectif
+[![CI](https://github.com/papastanb/super-opencode/actions/workflows/ci.yml/badge.svg)](https://github.com/papastanb/super-opencode/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Bun](https://img.shields.io/badge/Bun-1.3.9+-fff.svg?logo=bun)](https://bun.sh)
+[![Node](https://img.shields.io/badge/Node-24+-339933.svg?logo=node.js)](https://nodejs.org/)
 
-Construire une couche compatible SuperClaude pour OpenCode basee sur :
+## What It Provides
 
-- des commandes OpenCode ` /sc-* `
-- des agents specialises
-- des skills chargeables a la demande
-- des integrations MCP
-- un plugin OpenCode pour les comportements non natifs
-- une persistance de session avancee
+- 28 `/sc-*` commands for common engineering workflows
+- 15 specialist agent prompts
+- 6 reusable mode skills
+- A local OpenCode plugin layer for persistence and compaction hints
+- Serena-first persistence guidance with repo-friendly scaffolding
 
-## Statut
+## Runtime Contract
 
-Le projet est au stade cadrage architecture + plan de portage.
+- Node.js 24+
+- Bun 1.3.9+
+- OpenCode
 
-## Documents clefs
+## Install In An Existing OpenCode Project
 
-- `ARCHITECTURE.md`
-- `docs/PORTING_PLAN.md`
+```bash
+bun add -d super-opencode
+bunx super-opencode install
+```
+
+This installs the Super OpenCode scaffold into the current project:
+
+- `.opencode/commands`
+- `.opencode/agents`
+- `.opencode/skills`
+- `.opencode/plugins`
+- `docs/instructions/opencode-core.md`
+
+If `opencode.json` already exists, the installer appends `docs/instructions/opencode-core.md` to the `instructions` array when needed.
+
+## Develop This Repository
+
+```bash
+git clone https://github.com/papastanb/super-opencode.git
+cd super-opencode
+bun install
+bun run check
+bun test
+bun run release:check
+```
+
+## MCP Strategy
+
+- `serena`: required for the full persistence workflow
+- `context7`: optional, recommended for official documentation lookups
+- `sequential`: optional, recommended for structured reasoning
+- `playwright`, `chrome-devtools`, `tavily`, `morph`: optional, task-dependent
+
+The repo config enables `serena` and keeps the other MCPs available but disabled by default. See `.opencode/examples/opencode.example.json` for a fuller setup.
+
+## Documentation
+
+- [INSTALL.md](INSTALL.md): installation details and troubleshooting
+- [USAGE.md](USAGE.md): usage patterns and command examples
+- [COMMANDS.md](COMMANDS.md): command reference
+- [ARCHITECTURE.md](ARCHITECTURE.md): project architecture
+
+## Release Status
+
+This repository is the source and development home for Super OpenCode.
+
+The npm package is intended to scaffold Super OpenCode into existing OpenCode projects. Internal planning files under `docs/memory/` are not part of the published package contract.
+
+## License
+
+MIT. See [LICENSE](LICENSE).

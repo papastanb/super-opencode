@@ -1,0 +1,59 @@
+name: CI / PR Review
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: TypeScript typecheck
+        run: bun run typecheck
+
+      - name: Structure validation
+        run: bun run validate:structure
+
+      - name: Run tests
+        run: bun test
+
+      - name: Cross-platform validation
+        run: bun scripts/validate-cross-platform.mjs
+
+      - name: Release package validation
+        run: bun run release:check
+
+  review-trigger:
+    needs: validate
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Create review summary
+        run: |
+          echo "## Validation Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ TypeScript: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Structure: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Tests: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Cross-platform: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Package release checks: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Ready for agent review (Qodo, Devin, CodeRabbit)" >> $GITHUB_STEP_SUMMARY
