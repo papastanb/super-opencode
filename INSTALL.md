@@ -126,11 +126,11 @@ Important constraints from npm Trusted Publishing:
 
 After that, publish by pushing a `v`-prefixed git tag whose numeric portion matches `package.json`.
 
-If `package.json` contains `"version": "1.0.0"`, the release tag must be `v1.0.0`:
+If `package.json` contains `"version": "1.0.1"`, the release tag must be `v1.0.1`:
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+git tag v1.0.1
+git push origin v1.0.1
 ```
 
 Pushing that tag triggers the GitHub Actions publish workflow.

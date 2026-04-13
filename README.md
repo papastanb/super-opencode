@@ -78,8 +78,8 @@ This package is intended to publish through GitHub Actions with npm Trusted Publ
 Release flow:
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+git tag v<version>
+git push origin v<version>
 ```
 
 The publish workflow validates the repository, checks that the tag matches `package.json`, and publishes through npm OIDC.
