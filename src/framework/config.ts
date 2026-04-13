@@ -173,6 +173,7 @@ function ensureStringArray(input: unknown): string[] {
   return Array.isArray(input) ? input.filter((entry): entry is string => typeof entry === "string") : []
 }
 
+/** Merges framework requirements into opencode.json while preserving JSONC comments when possible. */
 export async function patchOpencodeConfig(options: {
   filePath: string
   manifest: FrameworkManifest
@@ -245,6 +246,7 @@ export async function patchOpencodeConfig(options: {
   }
 }
 
+/** Ensures the framework TUI plugin is present in the scope-local tui.json file. */
 export async function patchTuiConfig(options: {
   filePath: string
   manifest: FrameworkManifest
@@ -291,6 +293,7 @@ function removeInstructions(instructions: string[], managed: string[]): string[]
   return instructions.filter((entry) => !managed.includes(entry))
 }
 
+/** Removes framework-managed opencode.json entries that were added for this scope. */
 export async function removeFrameworkConfig(options: {
   filePath: string
   manifest: FrameworkManifest
@@ -345,6 +348,7 @@ export async function removeFrameworkConfig(options: {
   return { changed: true, removedFile: false }
 }
 
+/** Removes the framework TUI plugin entry from the scope-local tui.json during uninstall. */
 export async function removeFrameworkTuiConfig(options: {
   filePath: string
   manifest: FrameworkManifest
@@ -375,10 +379,12 @@ export async function removeFrameworkTuiConfig(options: {
   return { changed: true, removedFile: false }
 }
 
+/** Returns the supplied scope detections unchanged. */
 export async function detectInstalledScopes(input: ScopeDetection[]): Promise<ScopeDetection[]> {
   return input
 }
 
+/** Builds a standard report item for config file writes. */
 export function configReportItems(kind: "opencode" | "tui", changed: boolean, created: boolean): ReportItem[] {
   if (changed) {
     return [

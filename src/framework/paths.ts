@@ -22,10 +22,12 @@ function resolveDefaultGlobalConfigDir(env: NodeJS.ProcessEnv): string {
   return path.join(homedir(), ".config", "opencode")
 }
 
+/** Resolves the project root used for project-scope framework operations. */
 export function resolveProjectRoot(input?: string): string {
   return path.resolve(input ?? process.cwd())
 }
 
+/** Resolves package, config, and state file paths for a specific framework scope. */
 export function resolveScopePaths(options: FrameworkOptions, stateFile: string): ScopePaths {
   const env = options.env ?? process.env
   const packageRoot = findPackageRoot(import.meta.url)

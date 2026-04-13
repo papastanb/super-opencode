@@ -3,6 +3,7 @@ import path from "node:path"
 
 import type { FrameworkInstallState, Scope } from "./types.js"
 
+/** Creates an empty persisted state object for a scope that has not been bootstrapped yet. */
 export function createEmptyState(scope: Scope, packageVersion: string, manifestVersion: number): FrameworkInstallState {
   return {
     scope,
@@ -21,6 +22,7 @@ export function createEmptyState(scope: Scope, packageVersion: string, manifestV
   }
 }
 
+/** Reads persisted framework state for the requested scope when it exists. */
 export async function readInstallState(filePath: string): Promise<FrameworkInstallState | undefined> {
   try {
     const raw = await readFile(filePath, "utf8")
@@ -34,11 +36,13 @@ export async function readInstallState(filePath: string): Promise<FrameworkInsta
   }
 }
 
+/** Persists the framework state used for idempotent updates and safe uninstalls. */
 export async function writeInstallState(filePath: string, state: FrameworkInstallState): Promise<void> {
   await mkdir(path.dirname(filePath), { recursive: true })
   await writeFile(filePath, `${JSON.stringify(state, null, 2)}\n`, "utf8")
 }
 
+/** Removes the persisted framework state file for a scope. */
 export async function removeInstallState(filePath: string): Promise<void> {
   await rm(filePath, { force: true })
 }

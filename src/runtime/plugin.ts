@@ -12,6 +12,7 @@ function emptyHooks(): Hooks {
   return {}
 }
 
+/** Creates the runtime plugin hooks and skips duplicate registration within one process. */
 export const SuperOpenCodePlugin: Plugin = async ({ client, worktree }) => {
   const runtimeState = globalThis as GlobalRuntimeState
   if (runtimeState[runtimeLoadMarker]) {

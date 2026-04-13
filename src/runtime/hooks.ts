@@ -34,6 +34,7 @@ function pushUniqueText(lines: string[], value: string): void {
   }
 }
 
+/** Creates command hooks that inject persistence and checkpoint guidance without duplicate parts. */
 export const createCommandHooks = (): Hooks => ({
   "command.execute.before": async (input, output) => {
     const normalized = (input.command ?? "").replace(/^\//, "")
@@ -60,12 +61,14 @@ export const createCommandHooks = (): Hooks => ({
   },
 })
 
+/** Creates system hooks that inject the framework persistence contract exactly once. */
 export const createSystemHooks = (): Hooks => ({
   "experimental.chat.system.transform": async (_input, output) => {
     pushUniqueText(output.system, persistenceContract)
   },
 })
 
+/** Creates compaction hooks that preserve framework memory guidance across compaction. */
 export const createCompactionHooks = (worktree: string): Hooks => ({
   "experimental.session.compacting": async (_input, output) => {
     pushUniqueText(

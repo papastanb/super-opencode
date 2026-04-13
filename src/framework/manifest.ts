@@ -6,6 +6,7 @@ import type { FrameworkManifest } from "./types.js"
 
 let cachedManifestPromise: Promise<FrameworkManifest> | undefined
 
+/** Loads the packaged framework manifest once per process and retries after load failures. */
 export async function loadFrameworkManifest(): Promise<FrameworkManifest> {
   if (cachedManifestPromise) {
     return cachedManifestPromise

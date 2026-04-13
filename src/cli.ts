@@ -54,6 +54,7 @@ function renderReport(report: FrameworkReport): string {
   return `${lines.join("\n")}\n`
 }
 
+/** Runs the framework CLI for install, status, update, uninstall, and scope discovery. */
 export async function runCli(argv = process.argv.slice(2)): Promise<number> {
   const { command, options } = parseArgs(argv)
 

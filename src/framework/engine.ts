@@ -217,6 +217,7 @@ async function syncAssets(options: {
   return changed
 }
 
+/** Installs or resynchronizes the framework into the requested scope. */
 export async function installFramework(options: FrameworkOptions): Promise<FrameworkReport> {
   const manifest = await loadFrameworkManifest()
   const paths = resolveScopePaths(options, manifest.stateFile)
@@ -302,12 +303,14 @@ export async function installFramework(options: FrameworkOptions): Promise<Frame
   return report
 }
 
+/** Reuses the install flow to refresh an existing framework installation. */
 export async function updateFramework(options: FrameworkOptions): Promise<FrameworkReport> {
   const report = await installFramework(options)
   report.action = "update"
   return report
 }
 
+/** Reports the current framework state for a scope without mutating files. */
 export async function statusFramework(options: FrameworkOptions): Promise<FrameworkReport> {
   const manifest = await loadFrameworkManifest()
   const paths = resolveScopePaths(options, manifest.stateFile)
@@ -348,6 +351,7 @@ export async function statusFramework(options: FrameworkOptions): Promise<Framew
   return report
 }
 
+/** Uninstalls framework-managed files and config from the requested scope. */
 export async function uninstallFramework(options: FrameworkOptions): Promise<FrameworkReport> {
   const manifest = await loadFrameworkManifest()
   const paths = resolveScopePaths(options, manifest.stateFile)
@@ -445,6 +449,7 @@ export async function uninstallFramework(options: FrameworkOptions): Promise<Fra
   return report
 }
 
+/** Detects whether global and project scopes currently have persisted framework state. */
 export async function detectFrameworkScopes(options: Omit<FrameworkOptions, "scope"> = {}): Promise<ScopeDetection[]> {
   const manifest = await loadFrameworkManifest()
   const globalPaths = resolveScopePaths({ ...options, scope: "global" }, manifest.stateFile)
