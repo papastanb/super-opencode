@@ -1,86 +1,397 @@
-import { describe, test, expect } from 'bun:test'
-import { readFileSync, existsSync } from 'fs'
-import { join } from 'path'
+import { beforeAll, describe, expect, test } from 'bun:test'
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
+import { execFile } from 'node:child_process'
+import { promisify } from 'node:util'
+import { createHash } from 'node:crypto'
+import { parse } from 'jsonc-parser'
 
-const projectRoot = join(import.meta.dir, '..')
+import { installFramework, statusFramework, uninstallFramework, updateFramework } from '../src/framework/engine.ts'
 
-describe('Project Structure', () => {
-  test('package.json exists and is valid', () => {
-    const pkgPath = join(projectRoot, 'package.json')
-    expect(existsSync(pkgPath)).toBe(true)
-    
-    const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'))
-    expect(pkg.name).toBe('super-opencode-framework')
-    expect(pkg.version).toBe('1.0.1')
+const execFileAsync = promisify(execFile)
+const projectRoot = path.join(import.meta.dir, '..')
+const cliEntry = path.join(projectRoot, 'scripts', 'install-project.mjs')
+
+function hashContent(content) {
+  return createHash('sha256').update(content).digest('hex')
+}
+
+async function readJson(filePath) {
+  return parse(await readFile(filePath, 'utf8'))
+}
+
+async function runCli(cwd, args, env = process.env) {
+  return execFileAsync('node', [cliEntry, ...args], {
+    cwd,
+    env: { ...process.env, ...env },
+  })
+}
+
+async function createSandbox(label) {
+  const root = await mkdtemp(path.join(tmpdir(), `super-opencode-${label}-`))
+  const workspace = path.join(root, 'workspace')
+  const globalConfigDir = path.join(root, 'global-config')
+  await mkdir(workspace, { recursive: true })
+  await mkdir(globalConfigDir, { recursive: true })
+  return { root, workspace, globalConfigDir }
+}
+
+async function assertProjectInstallLayout(workspace) {
+  expect(await readFile(path.join(workspace, '.opencode', 'agents', 'pm-agent.md'), 'utf8')).toContain('pm-agent')
+  expect(await readFile(path.join(workspace, '.opencode', 'commands', 'sc-help.md'), 'utf8')).toContain('List available `/sc-*` commands')
+  expect(await readFile(path.join(workspace, '.opencode', 'skills', 'sc-orchestration', 'SKILL.md'), 'utf8')).toContain('sc-orchestration')
+  expect(await readFile(path.join(workspace, '.opencode', 'instructions', 'opencode-core.md'), 'utf8')).toContain('Super OpenCode Core Instructions')
+}
+
+async function assertGlobalInstallLayout(globalConfigDir) {
+  expect(await readFile(path.join(globalConfigDir, 'agents', 'pm-agent.md'), 'utf8')).toContain('pm-agent')
+  expect(await readFile(path.join(globalConfigDir, 'commands', 'sc-help.md'), 'utf8')).toContain('List available `/sc-*` commands')
+  expect(await readFile(path.join(globalConfigDir, 'skills', 'sc-orchestration', 'SKILL.md'), 'utf8')).toContain('sc-orchestration')
+  expect(await readFile(path.join(globalConfigDir, 'instructions', 'opencode-core.md'), 'utf8')).toContain('Super OpenCode Core Instructions')
+}
+
+beforeAll(async () => {
+  await execFileAsync('bun', ['run', 'build'], { cwd: projectRoot, env: process.env })
+})
+
+describe('Package surface', () => {
+  test('package exposes explicit server and tui targets', async () => {
+    const pkg = await readJson(path.join(projectRoot, 'package.json'))
+    expect(pkg.exports['./server'].import).toBe('./dist/src/server.js')
+    expect(pkg.exports['./tui'].import).toBe('./dist/src/tui.js')
   })
 
-  test('opencode.json exists and is valid', () => {
-    const configPath = join(projectRoot, 'opencode.json')
-    expect(existsSync(configPath)).toBe(true)
-    
-    const config = JSON.parse(readFileSync(configPath, 'utf-8'))
-    expect(config.mcp?.serena?.enabled).toBe(true)
-  })
+  test('scopes command works without --scope', async () => {
+    const sandbox = await createSandbox('scopes-command')
 
-  test('AGENTS.md exists', () => {
-    expect(existsSync(join(projectRoot, 'AGENTS.md'))).toBe(true)
-  })
-
-  test('runtime instructions exist', () => {
-    expect(existsSync(join(projectRoot, '.opencode/instructions/opencode-core.md'))).toBe(true)
+    try {
+      const { stdout } = await runCli(sandbox.workspace, ['scopes'], { OPENCODE_CONFIG_DIR: sandbox.globalConfigDir })
+      expect(stdout).toContain('"scope": "global"')
+      expect(stdout).toContain('"scope": "project"')
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
   })
 })
 
-describe('OpenCode Commands', () => {
-  test('commands directory exists', () => {
-    expect(existsSync(join(projectRoot, '.opencode/commands'))).toBe(true)
+describe('Framework bootstrap', () => {
+  test('installs global scope into ~/.config/opencode-compatible layout', async () => {
+    const sandbox = await createSandbox('global-only')
+
+    try {
+      const { stdout } = await runCli(sandbox.workspace, ['install', '--scope', 'global'], {
+        OPENCODE_CONFIG_DIR: sandbox.globalConfigDir,
+        CONTEXT7_API_KEY: '',
+        TAVILY_API_KEY: '',
+        MORPH_API_KEY: '',
+      })
+
+      expect(stdout).toContain('Scope: global')
+      await assertGlobalInstallLayout(sandbox.globalConfigDir)
+
+      const opencodeConfig = await readJson(path.join(sandbox.globalConfigDir, 'opencode.json'))
+      const tuiConfig = await readJson(path.join(sandbox.globalConfigDir, 'tui.json'))
+      expect(opencodeConfig.plugin).toContain('super-opencode-framework')
+      expect(opencodeConfig.instructions).toContain('instructions/opencode-core.md')
+      expect(tuiConfig.plugin).toContain('super-opencode-framework')
+      expect(opencodeConfig.mcp.serena).toBeDefined()
+      expect(opencodeConfig.mcp.context7.enabled).toBe(false)
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
   })
 
-  test('sc-pm command exists', () => {
-    expect(existsSync(join(projectRoot, '.opencode/commands/sc-pm.md'))).toBe(true)
+  test('installs project scope into .opencode and project configs', async () => {
+    const sandbox = await createSandbox('project-only')
+
+    try {
+      await writeFile(
+        path.join(sandbox.workspace, 'opencode.json'),
+        '{\n  // keep this comment\n  "instructions": ["docs/local.md"]\n}\n',
+        'utf8',
+      )
+
+      const { stdout } = await runCli(sandbox.workspace, ['install', '--scope', 'project'], {
+        OPENCODE_CONFIG_DIR: sandbox.globalConfigDir,
+        CONTEXT7_API_KEY: '',
+        TAVILY_API_KEY: '',
+        MORPH_API_KEY: '',
+      })
+
+      expect(stdout).toContain('Scope: project')
+      await assertProjectInstallLayout(sandbox.workspace)
+
+      const opencodeConfig = await readJson(path.join(sandbox.workspace, 'opencode.json'))
+      const tuiConfig = await readJson(path.join(sandbox.workspace, 'tui.json'))
+      expect(await readFile(path.join(sandbox.workspace, 'opencode.json'), 'utf8')).toContain('// keep this comment')
+      expect(opencodeConfig.plugin).toContain('super-opencode-framework')
+      expect(opencodeConfig.instructions).toContain('.opencode/instructions/opencode-core.md')
+      expect(tuiConfig.plugin).toContain('super-opencode-framework')
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
   })
 
-  test('sc-save command exists', () => {
-    expect(existsSync(join(projectRoot, '.opencode/commands/sc-save.md'))).toBe(true)
+  test('supports global then project without mixing target directories', async () => {
+    const sandbox = await createSandbox('global-then-project')
+
+    try {
+      await runCli(sandbox.workspace, ['install', '--scope', 'global'], { OPENCODE_CONFIG_DIR: sandbox.globalConfigDir })
+      await runCli(sandbox.workspace, ['install', '--scope', 'project'], { OPENCODE_CONFIG_DIR: sandbox.globalConfigDir })
+
+      await assertGlobalInstallLayout(sandbox.globalConfigDir)
+      await assertProjectInstallLayout(sandbox.workspace)
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
   })
 
-  test('sc-load command exists', () => {
-    expect(existsSync(join(projectRoot, '.opencode/commands/sc-load.md'))).toBe(true)
+  test('supports project then global without duplicating config entries', async () => {
+    const sandbox = await createSandbox('project-then-global')
+
+    try {
+      await runCli(sandbox.workspace, ['install', '--scope', 'project'], { OPENCODE_CONFIG_DIR: sandbox.globalConfigDir })
+      await runCli(sandbox.workspace, ['install', '--scope', 'global'], { OPENCODE_CONFIG_DIR: sandbox.globalConfigDir })
+
+      const projectConfig = await readJson(path.join(sandbox.workspace, 'opencode.json'))
+      const globalConfig = await readJson(path.join(sandbox.globalConfigDir, 'opencode.json'))
+
+      expect(projectConfig.plugin.filter((entry) => entry === 'super-opencode-framework')).toHaveLength(1)
+      expect(globalConfig.plugin.filter((entry) => entry === 'super-opencode-framework')).toHaveLength(1)
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
+  })
+
+  test('is idempotent on a second install', async () => {
+    const sandbox = await createSandbox('idempotent')
+
+    try {
+      await runCli(sandbox.workspace, ['install', '--scope', 'project'], { OPENCODE_CONFIG_DIR: sandbox.globalConfigDir })
+      const secondRun = await runCli(sandbox.workspace, ['install', '--scope', 'project'], { OPENCODE_CONFIG_DIR: sandbox.globalConfigDir })
+
+      expect(secondRun.stdout).toContain('already up to date')
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
+  })
+
+  test('reports conflicts instead of overwriting a user-modified managed file', async () => {
+    const sandbox = await createSandbox('conflict')
+
+    try {
+      await runCli(sandbox.workspace, ['install', '--scope', 'project'], { OPENCODE_CONFIG_DIR: sandbox.globalConfigDir })
+
+      const commandPath = path.join(sandbox.workspace, '.opencode', 'commands', 'sc-help.md')
+      const userEditedContent = '# user override\n'
+      await writeFile(commandPath, userEditedContent, 'utf8')
+
+      let failure = null
+      try {
+        await runCli(sandbox.workspace, ['install', '--scope', 'project'], { OPENCODE_CONFIG_DIR: sandbox.globalConfigDir })
+      } catch (error) {
+        failure = error
+      }
+
+      expect(failure).not.toBeNull()
+      expect(failure.stdout).toContain('conflict/manual action required')
+      expect(await readFile(commandPath, 'utf8')).toBe(userEditedContent)
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
+  })
+
+  test('updates a previously managed asset revision safely', async () => {
+    const sandbox = await createSandbox('update')
+
+    try {
+      await runCli(sandbox.workspace, ['install', '--scope', 'project'], { OPENCODE_CONFIG_DIR: sandbox.globalConfigDir })
+
+      const commandPath = path.join(sandbox.workspace, '.opencode', 'commands', 'sc-help.md')
+      const statePath = path.join(sandbox.workspace, '.opencode', 'super-opencode', 'install-state.json')
+      const syntheticOldContent = '# old managed revision\n'
+      await writeFile(commandPath, syntheticOldContent, 'utf8')
+
+      const state = await readJson(statePath)
+      state.files['.opencode/commands/sc-help.md'].installedHash = hashContent(syntheticOldContent)
+      await writeFile(statePath, `${JSON.stringify(state, null, 2)}\n`, 'utf8')
+
+      const report = await updateFramework({
+        scope: 'project',
+        projectRoot: sandbox.workspace,
+        env: { ...process.env, OPENCODE_CONFIG_DIR: sandbox.globalConfigDir },
+      })
+
+      expect(report.items.some((item) => item.name === '.opencode/commands/sc-help.md' && item.status === 'updated')).toBe(true)
+      expect(await readFile(commandPath, 'utf8')).toContain('List available `/sc-*` commands')
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
+  })
+
+  test('preserves install state and config when uninstall hits a conflicted managed file', async () => {
+    const sandbox = await createSandbox('uninstall-conflict')
+
+    try {
+      await runCli(sandbox.workspace, ['install', '--scope', 'project'], { OPENCODE_CONFIG_DIR: sandbox.globalConfigDir })
+
+      const commandPath = path.join(sandbox.workspace, '.opencode', 'commands', 'sc-help.md')
+      const statePath = path.join(sandbox.workspace, '.opencode', 'super-opencode', 'install-state.json')
+      await writeFile(commandPath, '# user modified uninstall conflict\n', 'utf8')
+
+      const report = await uninstallFramework({
+        scope: 'project',
+        projectRoot: sandbox.workspace,
+        env: { ...process.env, OPENCODE_CONFIG_DIR: sandbox.globalConfigDir },
+      })
+
+      expect(report.items.some((item) => item.status === 'conflict/manual action required')).toBe(true)
+      expect(await readFile(commandPath, 'utf8')).toBe('# user modified uninstall conflict\n')
+
+      const state = await readJson(statePath)
+      expect(state.files['.opencode/commands/sc-help.md']).toBeDefined()
+
+      const opencodeConfig = await readJson(path.join(sandbox.workspace, 'opencode.json'))
+      const tuiConfig = await readJson(path.join(sandbox.workspace, 'tui.json'))
+      expect(opencodeConfig.plugin).toContain('super-opencode-framework')
+      expect(tuiConfig.plugin).toContain('super-opencode-framework')
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
+  })
+
+  test('uninstalls project scope cleanly', async () => {
+    const sandbox = await createSandbox('uninstall-project')
+
+    try {
+      await runCli(sandbox.workspace, ['install', '--scope', 'project'], { OPENCODE_CONFIG_DIR: sandbox.globalConfigDir })
+      const { stdout } = await runCli(sandbox.workspace, ['uninstall', '--scope', 'project'], { OPENCODE_CONFIG_DIR: sandbox.globalConfigDir })
+
+      expect(stdout).toContain('Action: uninstall')
+
+      const opencodeConfig = await readJson(path.join(sandbox.workspace, 'opencode.json'))
+      const tuiConfig = await readJson(path.join(sandbox.workspace, 'tui.json'))
+      expect(opencodeConfig.plugin ?? []).not.toContain('super-opencode-framework')
+      expect(tuiConfig.plugin ?? []).not.toContain('super-opencode-framework')
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
   })
 })
 
-describe('OpenCode Agents', () => {
-  test('agents directory exists', () => {
-    expect(existsSync(join(projectRoot, '.opencode/agents'))).toBe(true)
+describe('MCP diagnostics', () => {
+  test('marks env-backed MCPs disabled when secrets are absent', async () => {
+    const sandbox = await createSandbox('mcp-missing-env')
+
+    try {
+      const report = await installFramework({
+        scope: 'project',
+        projectRoot: sandbox.workspace,
+        env: {
+          ...process.env,
+          OPENCODE_CONFIG_DIR: sandbox.globalConfigDir,
+          CONTEXT7_API_KEY: '',
+          TAVILY_API_KEY: '',
+          MORPH_API_KEY: '',
+        },
+      })
+
+      expect(report.mcp.find((entry) => entry.name === 'context7')?.status).toBe('configured but disabled by missing env')
+      expect(report.mcp.find((entry) => entry.name === 'tavily')?.status).toBe('configured but disabled by missing env')
+      expect(report.mcp.find((entry) => entry.name === 'morph')?.status).toBe('configured but disabled by missing env')
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
   })
 
-  test('pm-agent exists', () => {
-    expect(existsSync(join(projectRoot, '.opencode/agents/pm-agent.md'))).toBe(true)
-  })
-})
+  test('re-enables env-backed MCPs on update once prerequisites appear', async () => {
+    const sandbox = await createSandbox('mcp-reenable')
 
-describe('OpenCode Skills', () => {
-  test('skills directory exists', () => {
-    expect(existsSync(join(projectRoot, '.opencode/skills'))).toBe(true)
+    try {
+      await installFramework({
+        scope: 'project',
+        projectRoot: sandbox.workspace,
+        env: {
+          ...process.env,
+          OPENCODE_CONFIG_DIR: sandbox.globalConfigDir,
+          CONTEXT7_API_KEY: '',
+          TAVILY_API_KEY: '',
+          MORPH_API_KEY: '',
+        },
+      })
+
+      const firstConfig = await readJson(path.join(sandbox.workspace, 'opencode.json'))
+      expect(firstConfig.mcp.context7.enabled).toBe(false)
+
+      const report = await updateFramework({
+        scope: 'project',
+        projectRoot: sandbox.workspace,
+        env: {
+          ...process.env,
+          OPENCODE_CONFIG_DIR: sandbox.globalConfigDir,
+          CONTEXT7_API_KEY: 'token',
+          TAVILY_API_KEY: 'token',
+          MORPH_API_KEY: 'token',
+        },
+      })
+
+      expect(report.mcp.find((entry) => entry.name === 'context7')?.status).toBe('configured and enabled')
+
+      const updatedConfig = await readJson(path.join(sandbox.workspace, 'opencode.json'))
+      expect(updatedConfig.mcp.context7.enabled).toBe(true)
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
   })
 
-  test('sc-brainstorming skill exists', () => {
-    expect(existsSync(join(projectRoot, '.opencode/skills/sc-brainstorming/SKILL.md'))).toBe(true)
+  test('marks binary-backed MCPs disabled when binaries are unavailable', async () => {
+    const sandbox = await createSandbox('mcp-missing-bin')
+
+    try {
+      const report = await statusFramework({
+        scope: 'project',
+        projectRoot: sandbox.workspace,
+        env: {
+          PATH: '',
+          PATHEXT: process.env.PATHEXT ?? '.EXE;.CMD;.BAT;.COM',
+          OPENCODE_CONFIG_DIR: sandbox.globalConfigDir,
+          CONTEXT7_API_KEY: 'token',
+          TAVILY_API_KEY: 'token',
+          MORPH_API_KEY: 'token',
+        },
+      })
+
+      expect(report.mcp.find((entry) => entry.name === 'serena')?.status).toBe('configured but disabled by missing binary')
+      expect(report.mcp.find((entry) => entry.name === 'sequential')?.status).toBe('configured but disabled by missing binary')
+      expect(report.mcp.find((entry) => entry.name === 'playwright')?.status).toBe('configured but disabled by missing binary')
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
   })
 
-  test('sc-orchestration skill exists', () => {
-    expect(existsSync(join(projectRoot, '.opencode/skills/sc-orchestration/SKILL.md'))).toBe(true)
-  })
-})
+  test('status reports missing assets truthfully in a clean workspace', async () => {
+    const sandbox = await createSandbox('status-clean-workspace')
 
-describe('Plugin', () => {
-  test('plugin main file exists', () => {
-    expect(existsSync(join(projectRoot, '.opencode/plugins/super-opencode.ts'))).toBe(true)
-  })
+    try {
+      const report = await statusFramework({
+        scope: 'project',
+        projectRoot: sandbox.workspace,
+        env: {
+          ...process.env,
+          OPENCODE_CONFIG_DIR: sandbox.globalConfigDir,
+        },
+      })
 
-  test('plugin modules exist', () => {
-    expect(existsSync(join(projectRoot, '.opencode/plugins/super-opencode/memory.ts'))).toBe(true)
-    expect(existsSync(join(projectRoot, '.opencode/plugins/super-opencode/system.ts'))).toBe(true)
-    expect(existsSync(join(projectRoot, '.opencode/plugins/super-opencode/commands.ts'))).toBe(true)
+      const missingAssetItems = report.items.filter(
+        (item) => item.kind === 'asset' && item.detail === 'Asset is not installed in this scope.',
+      )
+
+      expect(missingAssetItems.length).toBeGreaterThan(0)
+      expect(missingAssetItems.every((item) => item.status === 'skipped')).toBe(true)
+      expect(report.items.some((item) => item.status === 'installed')).toBe(false)
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
   })
 })

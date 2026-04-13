@@ -9,6 +9,8 @@
     "rootDir": "."
   },
   "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
     ".opencode/plugins/**/*.ts"
   ]
 }
