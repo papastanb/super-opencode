@@ -117,6 +117,13 @@ Configure this once on npm:
 5. Repository: `super-opencode`.
 6. Workflow filename: `publish.yml`.
 
+Important constraints from npm Trusted Publishing:
+
+- the workflow filename must match exactly: `publish.yml`
+- publishing must run on GitHub-hosted runners
+- npm CLI must be recent enough to support trusted publishing
+- provenance is generated automatically by npm for trusted publishing from public repositories, so the workflow does not need `--provenance`
+
 After that, publish by pushing a `v`-prefixed git tag whose numeric portion matches `package.json`.
 
 If `package.json` contains `"version": "1.0.0"`, the release tag must be `v1.0.0`:
