@@ -18,15 +18,14 @@ describe('Super OpenCode plugin hooks', () => {
     expect(output.system).toContain(persistenceContract)
   })
 
-  test('command hook adds persistence and checkpoint hints for sc-save', async () => {
+  test('command hook adds only the persistence hint for sc-save', async () => {
     const hooks = createCommandHooks()
     const output = { parts: [] }
 
     await hooks['command.execute.before']({ command: '/sc-save', sessionID: 'session-1' }, output)
 
-    expect(output.parts).toHaveLength(2)
+    expect(output.parts).toHaveLength(1)
     expect(output.parts[0].text).toBe(commandPersistenceHint)
-    expect(output.parts[1].text).toContain('/sc-save')
   })
 
   test('command hook stays silent for unrelated commands', async () => {

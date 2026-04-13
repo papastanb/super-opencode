@@ -16,3 +16,4 @@ Behavior:
 
 Boundary:
 - do not silently rewrite tests unrelated to the user task
+- do not invent new test runners or frameworks when existing project commands are sufficient

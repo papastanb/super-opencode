@@ -13,3 +13,4 @@ upstream-superclaude/
 .serena/
 PROJECT_INDEX.md
 PROJECT_INDEX.json
+.npmrc

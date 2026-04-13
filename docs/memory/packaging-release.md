@@ -8,16 +8,30 @@
 {
   "name": "super-opencode-framework",
   "version": "1.0.0",
-  "main": ".opencode/plugins/super-opencode.ts",
+  "main": "./dist/.opencode/plugins/super-opencode.js",
+  "types": "./dist/.opencode/plugins/super-opencode.d.ts",
   "exports": {
-    ".": ".opencode/plugins/super-opencode.ts",
-    "./commands": ".opencode/commands/",
-    "./agents": ".opencode/agents/",
-    "./skills": ".opencode/skills/"
+    ".": {
+      "types": "./dist/.opencode/plugins/super-opencode.d.ts",
+      "import": "./dist/.opencode/plugins/super-opencode.js"
+    },
+    "./package.json": "./package.json"
   },
-  "files": [".opencode/**/*", "docs/**/*.md"],
-  "peerDependencies": {
-    "@opencode-ai/plugin": "^1.4.0"
+  "files": [
+    "dist/**/*",
+    ".opencode/commands/**/*.md",
+    ".opencode/agents/**/*.md",
+    ".opencode/skills/**/SKILL.md",
+    ".opencode/plugins/**/*.ts",
+    ".opencode/examples/*.json",
+    "docs/instructions/opencode-core.md",
+    "scripts/install-project.mjs",
+    "README.md",
+    "INSTALL.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "@opencode-ai/plugin": "^1.4.3"
   }
 }
 ```
@@ -31,9 +45,10 @@ Script `scripts/install-project.mjs` qui:
 
 ## Documentation utilisateur
 
-À créer:
-- README.md principal avec Installation, Usage, Commands
-- .opencode/README.md pour la config locale
+Etat actuel:
+- `README.md` principal avec installation, usage et release status
+- `INSTALL.md`, `USAGE.md`, `COMMANDS.md`, `ARCHITECTURE.md`, `CONTRIBUTING.md`, `CHANGELOG.md`
+- `.opencode/README.md` retire du package publie
 
 ## Exemples de config
 
@@ -41,17 +56,34 @@ Fichiers d'exemple à fournir:
 - Exemple opencode.json avec MCP recommandée
 - Exemple de configuration commands/agents
 
-## Vérification Cross-Platform
+## Validation
 
-Scripts vérifiant:
-- Windows (PowerShell)
-- macOS (zsh/bash)
-- Linux (bash)
+Checks utilises:
+- `bun run check`
+- `bun test`
+- `bun run release:check`
+- `npm publish --dry-run --loglevel=error`
 
 ## Publication
 
-Steps:
-1. Bump version dans package.json
-2. npm publish --access public
-3. Tag git avec version
-4. Release GitHub avec changelog
+Chemin de publication vise:
+
+1. Bump version dans `package.json`
+2. Configurer npm Trusted Publishing pour le package `super-opencode-framework`
+3. Configurer le workflow GitHub Actions `.github/workflows/publish.yml`
+4. Tag git avec la version exacte
+5. Push du tag pour declencher la publication npm via OIDC
+6. Release GitHub avec changelog
+
+Exemple:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+Notes:
+
+- le workflow verifie que le tag et `package.json` correspondent
+- le workflow publie via OIDC, sans token npm stocke en repo
+- `.npmrc` doit rester ignore par git et exclu du tarball npm

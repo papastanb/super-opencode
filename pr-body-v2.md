@@ -1,23 +1,24 @@
 ## Summary
 
-Complete Super OpenCode framework v1.0.0 release - portage de SuperClaude vers OpenCode.
+Complete Super OpenCode framework v1.0.0 release - porting from SuperClaude to OpenCode.
 
-### Features
+### Framework Overview
 
 - **28 commands** `/sc-*` ported from SuperClaude
 - **15 agents** (pm-agent, system-architect, etc.)
 - **6 skills** with upstream mode behaviors
 - **Serena MCP** integration for persistence
 - **Plugin engine** with hooks (system, command, compaction)
-- **Package npm-ready** with exports and peerDependencies
-- **Cross-platform** validation
+- **Package-ready scaffold** with validated exports and install flow
+- **Scaffold** validation in CI and release checks
 - **Test suite** (15 tests passing)
 - **CodeRabbit** config for automated reviews
 
 ### Changes in this PR
 
 - Added `.coderabbit.yaml` for automated code review
-- Added `lint` script to package.json
+- Added `lint` script to `package.json`
+- Captured the framework overview separately from the narrow PR delta to avoid review-scope ambiguity
 
 ### Test Results
 

@@ -103,3 +103,29 @@ bunx super-opencode-framework install --force
 ```bash
 bun run release:check
 ```
+
+## Trusted Publishing Setup
+
+Super OpenCode is intended to publish through GitHub Actions using npm Trusted Publishing rather than local publish tokens.
+
+Configure this once on npm:
+
+1. Open the npm package settings for `super-opencode-framework`.
+2. Add a Trusted Publisher.
+3. Provider: GitHub Actions.
+4. Organization or user: `papastanb`.
+5. Repository: `super-opencode`.
+6. Workflow filename: `publish.yml`.
+
+After that, publish by pushing a `v`-prefixed git tag whose numeric portion matches `package.json`.
+
+If `package.json` contains `"version": "1.0.0"`, the release tag must be `v1.0.0`:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+Pushing that tag triggers the GitHub Actions publish workflow.
+
+The workflow uses OIDC with `id-token: write`, so no npm write token should be stored in the repository.

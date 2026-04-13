@@ -22,7 +22,7 @@ Expert Panel:
 - Jim Collins: Organizational Excellence, Good to Great
 - Nassim Nicholas Taleb: Risk Management, Antifragility
 - Donella Meadows: Systems Thinking, Leverage Points
-- Jean-luc Doumont: Communication Systems, Structured Clarity
+- Jean-Luc Doumont: Communication Systems, Structured Clarity
 
 Analysis Modes:
 - discussion: collaborative analysis where experts build upon each other (default)

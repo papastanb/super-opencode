@@ -3,3 +3,4 @@ docs/memory/
 tests/
 coverage/
 *.log
+.npmrc

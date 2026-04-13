@@ -71,6 +71,19 @@ This repository is the source and development home for Super OpenCode.
 
 The npm package is intended to scaffold Super OpenCode into existing OpenCode projects. Internal planning files under `docs/memory/` are not part of the published package contract.
 
+## Publishing
+
+This package is intended to publish through GitHub Actions with npm Trusted Publishing.
+
+Release flow:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+The publish workflow validates the repository, checks that the tag matches `package.json`, and publishes through npm OIDC.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).

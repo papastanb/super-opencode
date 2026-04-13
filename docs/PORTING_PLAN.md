@@ -46,7 +46,6 @@ Backlog de realignement upstream a planifier ensuite :
 - `sc-improve`
 - `sc-cleanup`
 - `sc-explain`
-- `sc-reflect`
 - `sc-git`
 - `sc-select-tool`
 - `sc-spawn`

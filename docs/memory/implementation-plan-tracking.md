@@ -288,6 +288,6 @@
 
 ## Immediate Next Steps
 
-- tester les commandes et agents portes sur des scenarios concrets, en priorite `sc-pm`, `sc-save`, `sc-load`, `sc-reflect`, `sc-recommend`, `sc-index-repo`
-- documenter les ecarts de comportement les plus visibles par rapport a l'upstream
-- preparer soit la poursuite Phase 1 etendue, soit l'entree en Phase 2 selon les arbitrages utilisateur
+- les phases -1 à 5 sont complètes; la suite relève maintenant du release management et du feedback réel
+- maintenir la memoire a jour au fil de l'eau, pas en fin de sprint
+- préparer la publication publique finale et les derniers arbitrages de release
