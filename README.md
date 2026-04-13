@@ -1,6 +1,6 @@
 # Super OpenCode
 
-> Installable OpenCode framework that ports key SuperClaude workflows into a reusable project scaffold.
+> OpenCode plugin package that ports key SuperClaude workflows and includes bundled `/sc-*` assets plus local sync support.
 
 [![CI](https://github.com/papastanb/super-opencode/actions/workflows/ci.yml/badge.svg)](https://github.com/papastanb/super-opencode/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -12,8 +12,9 @@
 - 28 `/sc-*` commands for common engineering workflows
 - 15 specialist agent prompts
 - 6 reusable mode skills
-- A local OpenCode plugin layer for persistence and compaction hints
-- Serena-first persistence guidance with repo-friendly scaffolding
+- An npm-installable OpenCode plugin runtime
+- Bundled command, agent, skill, plugin, and instruction assets
+- Serena-first persistence guidance for OpenCode sessions
 
 ## Runtime Contract
 
@@ -21,18 +22,23 @@
 - Bun 1.3.9+
 - OpenCode
 
-## Install In OpenCode
+## Install As An OpenCode Plugin
 
-Primary flow:
+Primary flow from the OpenCode UI:
 
 1. Open OpenCode.
 2. Press `Ctrl+P`.
 3. Open `plugins`.
-4. Install `super-opencode-framework`.
+4. Press `Shift+I` to install from npm.
+5. Enter `super-opencode-framework`.
 
-If you prefer a manual package-based install, use one of the following fallback paths.
+This installs the npm package that contains the Super OpenCode plugin runtime and its bundled assets.
 
-## Manual Install In An Existing OpenCode Project
+## Sync Bundled Assets Locally
+
+If you want those packaged `/sc-*` commands, agents, skills, plugins, and runtime instruction files materialized as local files in the current repository, use the manual sync command below.
+
+## Manual Package Install And Sync
 
 With Bun:
 
@@ -48,7 +54,7 @@ npm install -D super-opencode-framework
 npx super-opencode-framework install
 ```
 
-This installs the Super OpenCode scaffold into the current project:
+This syncs the bundled OpenCode assets into the current project:
 
 - `.opencode/commands`
 - `.opencode/agents`
@@ -56,7 +62,7 @@ This installs the Super OpenCode scaffold into the current project:
 - `.opencode/plugins`
 - `.opencode/instructions/opencode-core.md`
 
-If `opencode.json` already exists, the installer appends `.opencode/instructions/opencode-core.md` to the `instructions` array when needed.
+If `opencode.json` already exists, the sync command appends `.opencode/instructions/opencode-core.md` to the `instructions` array when needed.
 
 ## Develop This Repository
 
@@ -89,7 +95,7 @@ The repo config enables `serena` and keeps the other MCPs available but disabled
 
 This repository is the source and development home for Super OpenCode.
 
-The npm package is intended to scaffold Super OpenCode into existing OpenCode projects. Internal session notes, review drafts, and other maintainer-only artifacts are not part of the public repository or package contract.
+The npm package is an OpenCode plugin package. Its `/sc-*` commands, agents, skills, plugins, and runtime instruction files are part of the package; the manual sync flow simply copies those bundled assets into the local repository when you want them as project files.
 
 ## Publishing
 

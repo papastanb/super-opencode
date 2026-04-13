@@ -2,7 +2,7 @@
 
 ## Mission
 
-Porter SuperClaude vers OpenCode sous forme d'un framework installable et structure pour une future publication publique.
+Porter SuperClaude vers OpenCode sous forme d'un plugin npm pour OpenCode, avec assets bundles optionnels pour sync locale et publication publique.
 
 ## Regles de contexte
 

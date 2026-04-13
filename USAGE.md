@@ -1,16 +1,24 @@
 # Usage Guide
 
-Super OpenCode is intended to be installed into an existing OpenCode project.
+Super OpenCode is primarily consumed as an OpenCode plugin package.
+
+Recommended install flow:
+
+1. Open OpenCode.
+2. Press `Ctrl+P`.
+3. Open `plugins`.
+4. Press `Shift+I`.
+5. Enter `super-opencode-framework`.
+
+If you want the bundled `/sc-*` assets copied into the current repository as local files, run the manual sync flow described in `INSTALL.md`.
 
 ## Start OpenCode
 
-```bash
-opencode
-```
+After installing the plugin, start or restart OpenCode so the package is loaded.
 
 ## First Commands To Know
 
-```bash
+```text
 /sc-help
 /sc-recommend "I need to debug a failing release workflow"
 /sc-pm
@@ -22,28 +30,28 @@ Use `/sc-recommend` when you want the framework to choose a good path instead of
 
 ### Explore A New Problem
 
-```bash
+```text
 /sc-brainstorm "ways to add tenant-aware billing"
 /sc-design "tenant-aware billing model"
 ```
 
 ### Implement A Change
 
-```bash
+```text
 /sc-implement "add tenant-aware billing"
 /sc-test "validate tenant-aware billing"
 ```
 
 ### Investigate A Bug
 
-```bash
+```text
 /sc-troubleshoot "checkout fails after login refresh"
 /sc-analyze "auth and checkout interaction"
 ```
 
 ### Work From A Complex Goal
 
-```bash
+```text
 /sc-workflow "migrate the plugin packaging flow"
 /sc-task "track the migration work"
 ```

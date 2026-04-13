@@ -13,11 +13,20 @@
 1. Open OpenCode.
 2. Press `Ctrl+P`.
 3. Open `plugins`.
-4. Install `super-opencode-framework`.
+4. Press `Shift+I` to install from npm.
+5. Enter `super-opencode-framework`.
 
-This is the preferred path when you want to install the framework as an OpenCode plugin/package from the editor UX.
+This is the preferred path when you want to install the package as an OpenCode plugin from the editor UX.
 
-## Manual Install In An Existing Project
+What this installs:
+
+- the npm plugin package itself
+- the runtime plugin hooks exported by the package
+- the bundled `/sc-*` commands, agents, skills, plugin files, and runtime instruction files that ship with the package
+
+If you want those bundled assets materialized as local files in your project, use the manual sync flow below.
+
+## Manual Install And Local Asset Sync
 
 ### 1. Install The Package
 
@@ -33,7 +42,7 @@ With npm:
 npm install -D super-opencode-framework
 ```
 
-### 2. Scaffold The OpenCode Assets
+### 2. Sync The Bundled OpenCode Assets
 
 With Bun:
 
@@ -65,7 +74,7 @@ npx super-opencode-framework install --force
 
 ### 3. Verify Your Project Config
 
-The installer copies the Super OpenCode runtime assets into your project and updates `opencode.json` when it already exists.
+The sync command copies the bundled OpenCode assets into your project and updates `opencode.json` when it already exists.
 
 Review these locations after installation:
 
@@ -118,7 +127,7 @@ If Node.js 24+ or Bun is missing, install them first and rerun the installer.
 
 ### No `opencode.json` In The Target Project
 
-The installer can scaffold Super OpenCode without `opencode.json`, but it cannot update instructions automatically.
+The sync command can copy the bundled assets without `opencode.json`, but it cannot update instructions automatically.
 
 Add this path manually to your OpenCode config:
 
@@ -128,7 +137,7 @@ Add this path manually to your OpenCode config:
 }
 ```
 
-### Reinstall The Scaffold
+### Re-Sync The Bundled Assets
 
 With Bun:
 

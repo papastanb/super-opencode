@@ -13,7 +13,7 @@ Thanks for contributing.
 This repository has two roles:
 
 - the source repository for developing Super OpenCode
-- the npm package that scaffolds Super OpenCode assets into existing OpenCode projects
+- the npm package that exposes Super OpenCode as an OpenCode plugin and includes bundled `/sc-*` assets plus local sync support
 
 When contributing, keep the published package contract separate from repo-only planning or memory files.
 
@@ -26,7 +26,7 @@ Open a GitHub issue and include:
 - what you expected
 - your environment: OS, Node version, Bun version, OpenCode version
 
-If the issue is about installation, include whether you installed through OpenCode (`Ctrl+P` -> `plugins`) or through the manual CLI path (`bunx super-opencode-framework install` / `npx super-opencode-framework install`).
+If the issue is about installation, include whether you installed through OpenCode (`Ctrl+P` -> `plugins` -> `Shift+I` -> `super-opencode-framework`) or through the manual CLI path (`bunx super-opencode-framework install` / `npx super-opencode-framework install`).
 
 ## Pull Requests
 

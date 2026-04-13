@@ -1,7 +1,7 @@
 {
   "name": "super-opencode-framework",
   "version": "1.0.1",
-  "description": "Installable OpenCode framework that ports key SuperClaude workflows into a reusable project scaffold.",
+  "description": "OpenCode plugin package that ports key SuperClaude workflows and includes bundled /sc-* assets plus local sync support.",
   "author": "SuperClaude Community",
   "license": "MIT",
   "homepage": "https://github.com/papastanb/super-opencode#readme",

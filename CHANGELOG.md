@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Reframed the npm package as an installable scaffold for existing OpenCode projects rather than a raw mirror of this repository.
+- Reframed the npm package as an OpenCode plugin package with bundled `/sc-*` assets and local sync support rather than a raw mirror of this repository.
 - Aligned public documentation around the current runtime contract: Node.js 24+, Bun 1.3.9+, and OpenCode.
 - Clarified that `/sc-*` commands keep explicit boundaries while still allowing dynamic recommendation and routing instead of a rigid command mapping.
 
@@ -22,9 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `super-opencode-framework install` scaffold flow for copying runtime assets into an existing OpenCode project.
+- `super-opencode-framework install` sync flow for copying bundled OpenCode assets into an existing project when local files are desired.
 - Public-facing English docs for installation, usage, architecture, commands, and contribution guidance.
-- Plugin hook tests covering the scaffolded runtime behavior.
+- Plugin hook tests covering the runtime behavior.
 - `CODE_OF_CONDUCT.md`.
 
 ## [1.0.0] - 2026-04-11
@@ -34,13 +34,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial Super OpenCode framework release with 28 `/sc-*` commands.
 - Specialist agent prompts under `.opencode/agents/`.
 - Mode support skills under `.opencode/skills/`.
-- Serena-first persistence guidance and plugin hook scaffolding.
+- Serena-first persistence guidance and plugin hook runtime.
 - Repository documentation, examples, tests, and packaging foundation.
 
 ## [0.1.0] - 2026-04-10
 
 ### Added
 
-- Initial project scaffolding.
+- Initial project structure.
 - Basic command structure.
 - Early repository documentation.

@@ -59,7 +59,7 @@ async function ensureProjectInstructions(targetRoot) {
 }
 
 async function installProject(targetRoot, force) {
-  console.log('Installing Super OpenCode scaffold...')
+  console.log('Syncing bundled Super OpenCode assets...')
   console.log(`Target: ${targetRoot}`)
 
   await copyRuntimeAssets(targetRoot, force)

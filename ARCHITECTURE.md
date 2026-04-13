@@ -2,9 +2,9 @@
 
 ## Overview
 
-Super OpenCode is an installable scaffold for OpenCode projects.
+Super OpenCode is an npm-installable OpenCode plugin package.
 
-It packages a set of command prompts, agent prompts, mode skills, and a local plugin layer that together port key SuperClaude workflow ideas into the OpenCode ecosystem.
+It packages a plugin runtime plus bundled command prompts, agent prompts, mode skills, and instruction files that together port key SuperClaude workflow ideas into the OpenCode ecosystem.
 
 At runtime, the high-level flow is:
 
@@ -67,7 +67,7 @@ The plugin layer provides local behavior for:
 - compaction/checkpoint hints
 - shared runtime glue
 
-This is part of the scaffolded OpenCode project contract, not just internal repo code.
+This is the runtime plugin layer exposed by the npm package, not just internal repo code.
 
 ### MCP Layer
 
@@ -84,7 +84,7 @@ Super OpenCode is designed to degrade gracefully when optional MCPs are absent. 
 
 ## Published Package Surface
 
-The npm package is designed to scaffold the runtime assets a consuming OpenCode project needs:
+The npm package publishes the plugin runtime and bundled assets:
 
 - `.opencode/commands/**/*.md`
 - `.opencode/agents/**/*.md`
@@ -102,7 +102,7 @@ Repo-internal planning and memory files are not part of the public package contr
 - Bun 1.3.9+
 - OpenCode
 
-The public contract is intentionally modest: the package ships OpenCode scaffold assets plus a local plugin layer, and does not rely on a standalone executable runtime of its own.
+The public contract is intentionally modest: the package ships an OpenCode plugin runtime together with bundled `/sc-*` assets, and does not rely on a standalone executable runtime of its own.
 
 ## Design Principles
 
