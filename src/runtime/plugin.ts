@@ -2,7 +2,7 @@ import type { Hooks, Plugin } from "@opencode-ai/plugin"
 
 import { createCommandHooks, createCompactionHooks, createSystemHooks } from "./hooks.js"
 
-const runtimeLoadMarker = "__super_opencode_runtime_loaded__"
+const runtimeLoadMarker = Symbol.for("super-opencode.runtime-loaded")
 
 type GlobalRuntimeState = typeof globalThis & {
   [runtimeLoadMarker]?: boolean

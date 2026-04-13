@@ -41,6 +41,36 @@ function mergeObjects(base: JsonObject, override: JsonObject): JsonObject {
   return result
 }
 
+function jsonValuesEqual(left: unknown, right: unknown): boolean {
+  if (left === right) {
+    return true
+  }
+
+  if (Array.isArray(left) || Array.isArray(right)) {
+    if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) {
+      return false
+    }
+
+    return left.every((entry, index) => jsonValuesEqual(entry, right[index]))
+  }
+
+  if (isObject(left) || isObject(right)) {
+    if (!isObject(left) || !isObject(right)) {
+      return false
+    }
+
+    const leftKeys = Object.keys(left).sort()
+    const rightKeys = Object.keys(right).sort()
+    if (!jsonValuesEqual(leftKeys, rightKeys)) {
+      return false
+    }
+
+    return leftKeys.every((key) => jsonValuesEqual(left[key], right[key]))
+  }
+
+  return false
+}
+
 async function readJsoncObject(filePath: string): Promise<{ created: boolean; value: JsonObject }> {
   try {
     const raw = await readFile(filePath, "utf8")
@@ -194,7 +224,7 @@ export async function patchOpencodeConfig(options: {
 
     const mergedValue = currentValue ? mergeObjects(diagnostic.config, currentValue) : { ...diagnostic.config }
     mergedValue.enabled = diagnostic.enabled
-    if (!isObject(currentValue) || JSON.stringify(currentValue) !== JSON.stringify(mergedValue)) {
+    if (!isObject(currentValue) || !jsonValuesEqual(currentValue, mergedValue)) {
       changed = true
     }
 

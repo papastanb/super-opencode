@@ -7,7 +7,7 @@ import { createCommandHooks, createCompactionHooks, createSystemHooks } from '..
 import { commandPersistenceHint, persistenceContract } from '../src/runtime/memory.ts'
 import { SuperOpenCodePlugin } from '../src/runtime/plugin.ts'
 
-const runtimeLoadMarker = '__super_opencode_runtime_loaded__'
+const runtimeLoadMarker = Symbol.for('super-opencode.runtime-loaded')
 
 beforeEach(() => {
   delete globalThis[runtimeLoadMarker]

@@ -73,7 +73,13 @@ async function ensureFileParent(filePath: string): Promise<void> {
 async function removeEmptyDirectories(startDir: string, stopDir: string): Promise<void> {
   let current = startDir
   const resolvedStopDir = path.resolve(stopDir)
-  while (path.resolve(current).startsWith(resolvedStopDir) && path.resolve(current) !== resolvedStopDir) {
+  while (true) {
+    const resolvedCurrent = path.resolve(current)
+    const relativeToStop = path.relative(resolvedStopDir, resolvedCurrent)
+    if (resolvedCurrent === resolvedStopDir || relativeToStop.startsWith("..") || path.isAbsolute(relativeToStop)) {
+      return
+    }
+
     const entries = await readdir(current)
     if (entries.length > 0) {
       return
@@ -95,100 +101,6 @@ function createReport(action: FrameworkAction, scope: FrameworkOptions["scope"],
     items: [],
     mcp: [],
   }
-}
-
-async function syncAssetGroup(options: {
-  group: AssetGroup
-  packageRoot: string
-  configDir: string
-  stateFiles: Record<string, ManagedFileState>
-  reportItems: ReportItem[]
-  force: boolean
-  dryRun: boolean
-}): Promise<boolean> {
-  const sourceRoot = path.join(options.packageRoot, options.group.source)
-  const targetRoot = path.join(options.group.targets.project.startsWith(".opencode") ? path.dirname(options.configDir) : options.configDir, "")
-  const groupTargetRoot = path.join(targetRoot, options.group.targets[options.group.targets.project.startsWith(".opencode") ? "project" : "global"])
-  const files = await listRelativeFiles(sourceRoot)
-  let changed = false
-
-  for (const relativeFile of files) {
-    const sourcePath = path.join(sourceRoot, relativeFile)
-    const destinationPath = path.join(groupTargetRoot, relativeFile)
-    const destinationKey = path.relative(targetRoot, destinationPath).split(path.sep).join("/")
-    const sourceContent = await readFile(sourcePath, "utf8")
-    const sourceHash = hashContent(sourceContent)
-    const destinationContent = await readTextIfExists(destinationPath)
-    const previousState = options.stateFiles[destinationKey]
-
-    if (destinationContent === undefined) {
-      if (!options.dryRun) {
-        await ensureFileParent(destinationPath)
-        await writeFile(destinationPath, sourceContent, "utf8")
-        options.stateFiles[destinationKey] = {
-          group: options.group.id,
-          sourceHash,
-          installedHash: sourceHash,
-        }
-      }
-
-      changed = true
-      options.reportItems.push({ kind: "asset", name: destinationKey, status: "installed" })
-      continue
-    }
-
-    const destinationHash = hashContent(destinationContent)
-    if (destinationHash === sourceHash) {
-      options.stateFiles[destinationKey] = {
-        group: options.group.id,
-        sourceHash,
-        installedHash: sourceHash,
-      }
-      options.reportItems.push({ kind: "asset", name: destinationKey, status: "already up to date" })
-      continue
-    }
-
-    if (previousState && previousState.installedHash === destinationHash) {
-      if (!options.dryRun) {
-        await ensureFileParent(destinationPath)
-        await writeFile(destinationPath, sourceContent, "utf8")
-        options.stateFiles[destinationKey] = {
-          group: options.group.id,
-          sourceHash,
-          installedHash: sourceHash,
-        }
-      }
-
-      changed = true
-      options.reportItems.push({ kind: "asset", name: destinationKey, status: "updated" })
-      continue
-    }
-
-    if (options.force) {
-      if (!options.dryRun) {
-        await ensureFileParent(destinationPath)
-        await writeFile(destinationPath, sourceContent, "utf8")
-        options.stateFiles[destinationKey] = {
-          group: options.group.id,
-          sourceHash,
-          installedHash: sourceHash,
-        }
-      }
-
-      changed = true
-      options.reportItems.push({ kind: "asset", name: destinationKey, status: "updated", detail: "Overwritten with --force." })
-      continue
-    }
-
-    options.reportItems.push({
-      kind: "asset",
-      name: destinationKey,
-      status: "conflict/manual action required",
-      detail: "Destination file diverged from the managed hash. Re-run with --force or resolve manually.",
-    })
-  }
-
-  return changed
 }
 
 async function syncAssets(options: {
@@ -230,7 +142,7 @@ async function syncAssets(options: {
           }
         }
 
-        changed = true
+        changed ||= !options.dryRun
         options.reportItems.push({
           kind: "asset",
           name: destinationKey,
@@ -262,8 +174,13 @@ async function syncAssets(options: {
           }
         }
 
-        changed = true
-        options.reportItems.push({ kind: "asset", name: destinationKey, status: "updated" })
+        changed ||= !options.dryRun
+        options.reportItems.push({
+          kind: "asset",
+          name: destinationKey,
+          status: options.dryRun ? "skipped" : "updated",
+          detail: options.dryRun ? "Asset is outdated and would update on install/update." : undefined,
+        })
         continue
       }
 
@@ -278,8 +195,13 @@ async function syncAssets(options: {
           }
         }
 
-        changed = true
-        options.reportItems.push({ kind: "asset", name: destinationKey, status: "updated", detail: "Overwritten with --force." })
+        changed ||= !options.dryRun
+        options.reportItems.push({
+          kind: "asset",
+          name: destinationKey,
+          status: options.dryRun ? "skipped" : "updated",
+          detail: options.dryRun ? "Asset would be overwritten with --force." : "Overwritten with --force.",
+        })
         continue
       }
 

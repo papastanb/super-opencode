@@ -8,6 +8,9 @@ import { createHash } from 'node:crypto'
 import { parse } from 'jsonc-parser'
 
 import { installFramework, statusFramework, uninstallFramework, updateFramework } from '../src/framework/engine.ts'
+import { patchOpencodeConfig } from '../src/framework/config.ts'
+import { loadFrameworkManifest } from '../src/framework/manifest.ts'
+import { diagnoseMcpPolicies } from '../src/framework/prerequisites.ts'
 
 const execFileAsync = promisify(execFile)
 const projectRoot = path.join(import.meta.dir, '..')
@@ -172,6 +175,51 @@ describe('Framework bootstrap', () => {
       const secondRun = await runCli(sandbox.workspace, ['install', '--scope', 'project'], { OPENCODE_CONFIG_DIR: sandbox.globalConfigDir })
 
       expect(secondRun.stdout).toContain('already up to date')
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
+  })
+
+  test('does not rewrite MCP config when only key order differs', async () => {
+    const sandbox = await createSandbox('mcp-order-idempotent')
+
+    try {
+      const manifest = await loadFrameworkManifest()
+      const diagnostics = await diagnoseMcpPolicies(manifest, {
+        ...process.env,
+        OPENCODE_CONFIG_DIR: sandbox.globalConfigDir,
+        CONTEXT7_API_KEY: 'token',
+      })
+
+      await writeFile(
+        path.join(sandbox.workspace, 'opencode.json'),
+        `{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["super-opencode-framework"],
+  "instructions": [".opencode/instructions/opencode-core.md"],
+  "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "enabled": true,
+      "headers": {
+        "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}"
+      }
+    }
+  }
+}
+`,
+        'utf8',
+      )
+
+      const result = await patchOpencodeConfig({
+        filePath: path.join(sandbox.workspace, 'opencode.json'),
+        manifest,
+        scope: 'project',
+        diagnostics: diagnostics.filter((entry) => entry.name === 'context7'),
+      })
+
+      expect(result.changed).toBe(false)
     } finally {
       await rm(sandbox.root, { recursive: true, force: true })
     }
@@ -390,6 +438,36 @@ describe('MCP diagnostics', () => {
       expect(missingAssetItems.length).toBeGreaterThan(0)
       expect(missingAssetItems.every((item) => item.status === 'skipped')).toBe(true)
       expect(report.items.some((item) => item.status === 'installed')).toBe(false)
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
+  })
+
+  test('status reports outdated managed assets without claiming they were updated', async () => {
+    const sandbox = await createSandbox('status-outdated')
+
+    try {
+      await runCli(sandbox.workspace, ['install', '--scope', 'project'], { OPENCODE_CONFIG_DIR: sandbox.globalConfigDir })
+
+      const commandPath = path.join(sandbox.workspace, '.opencode', 'commands', 'sc-help.md')
+      const statePath = path.join(sandbox.workspace, '.opencode', 'super-opencode', 'install-state.json')
+      const previousManagedContent = '# old managed revision\n'
+      await writeFile(commandPath, previousManagedContent, 'utf8')
+
+      const state = await readJson(statePath)
+      state.files['.opencode/commands/sc-help.md'].installedHash = hashContent(previousManagedContent)
+      await writeFile(statePath, `${JSON.stringify(state, null, 2)}\n`, 'utf8')
+
+      const report = await statusFramework({
+        scope: 'project',
+        projectRoot: sandbox.workspace,
+        env: { ...process.env, OPENCODE_CONFIG_DIR: sandbox.globalConfigDir },
+      })
+
+      const assetItem = report.items.find((item) => item.name === '.opencode/commands/sc-help.md')
+      expect(assetItem?.status).toBe('skipped')
+      expect(assetItem?.detail).toBe('Asset is outdated and would update on install/update.')
+      expect(report.restartRequired).toBe(false)
     } finally {
       await rm(sandbox.root, { recursive: true, force: true })
     }

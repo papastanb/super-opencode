@@ -48,7 +48,7 @@ export const createCommandHooks = (): Hooks => ({
       })
     }
 
-    if (checkpointCommands.has(normalized) && normalized !== "sc-save") {
+    if (checkpointCommands.has(normalized)) {
       pushUniquePart(output.parts, {
         id: "super-opencode-checkpoint-hint",
         sessionID: input.sessionID,
