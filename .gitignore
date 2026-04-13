@@ -25,3 +25,4 @@ pr-body-v2.md
 *.pfx
 *.crt
 *.cer
+.playwright-mcp/

@@ -11,7 +11,7 @@ describe('Project Structure', () => {
     
     const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'))
     expect(pkg.name).toBe('super-opencode-framework')
-    expect(pkg.version).toBe('1.0.0')
+    expect(pkg.version).toBe('1.0.1')
   })
 
   test('opencode.json exists and is valid', () => {
