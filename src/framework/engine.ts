@@ -139,6 +139,7 @@ async function syncAssets(options: {
             group: group.id,
             sourceHash,
             installedHash: sourceHash,
+            origin: "installed",
           }
         }
 
@@ -154,12 +155,30 @@ async function syncAssets(options: {
 
       const destinationHash = hashContent(destinationContent)
       if (destinationHash === sourceHash) {
-        options.stateFiles[destinationKey] = {
-          group: group.id,
-          sourceHash,
-          installedHash: sourceHash,
+        // Only mark as managed if it was previously installed by us
+        if (previousState) {
+          options.stateFiles[destinationKey] = {
+            group: group.id,
+            sourceHash,
+            installedHash: sourceHash,
+            origin: previousState.origin,
+          }
+        } else {
+          // For files that already exist with matching content but weren't previously managed,
+          // we add them to state.files as "adopted" so we know not to delete them during uninstall
+          options.stateFiles[destinationKey] = {
+            group: group.id,
+            sourceHash,
+            installedHash: sourceHash,
+            origin: "adopted",
+          }
         }
-        options.reportItems.push({ kind: "asset", name: destinationKey, status: "already up to date" })
+        options.reportItems.push({ 
+          kind: "asset", 
+          name: destinationKey, 
+          status: previousState ? "already up to date" : "already present (unmanaged)",
+          detail: previousState ? undefined : "File already exists with matching content but is not managed by the framework." 
+        })
         continue
       }
 
@@ -171,6 +190,7 @@ async function syncAssets(options: {
             group: group.id,
             sourceHash,
             installedHash: sourceHash,
+            origin: "installed",
           }
         }
 
@@ -192,6 +212,7 @@ async function syncAssets(options: {
             group: group.id,
             sourceHash,
             installedHash: sourceHash,
+            origin: "installed",
           }
         }
 
@@ -381,6 +402,18 @@ export async function uninstallFramework(options: FrameworkOptions): Promise<Fra
     }
 
     const currentHash = hashContent(content)
+    // Skip deleting adopted files unless --force is used
+    if (fileState.origin === "adopted" && !(options.force ?? false)) {
+      remainingFiles[relativePath] = fileState
+      report.items.push({
+        kind: "asset",
+        name: relativePath,
+        status: "skipped",
+        detail: "File is unmanaged (adopted) and will not be removed unless --force is used.",
+      })
+      continue
+    }
+    
     if (currentHash !== fileState.installedHash && !(options.force ?? false)) {
       remainingFiles[relativePath] = fileState
       report.items.push({

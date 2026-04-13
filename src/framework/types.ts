@@ -6,6 +6,7 @@ export type ReportStatus =
   | "installed"
   | "updated"
   | "already up to date"
+  | "already present (unmanaged)"
   | "skipped"
   | "blocked by missing env"
   | "blocked by missing binary"
@@ -58,10 +59,13 @@ export type FrameworkManifest = {
   mcp: Record<string, McpPolicy>
 }
 
+export type ManagedFileOrigin = "installed" | "adopted"
+
 export type ManagedFileState = {
   group: AssetGroupId
   sourceHash: string
   installedHash: string
+  origin: ManagedFileOrigin
 }
 
 export type FrameworkInstallState = {

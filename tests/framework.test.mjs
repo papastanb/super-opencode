@@ -309,6 +309,52 @@ describe('Framework bootstrap', () => {
     }
   })
 
+  test('does not delete pre-existing identical files during uninstall', async () => {
+    const sandbox = await createSandbox('uninstall-adopted-files')
+
+    try {
+      // Create a pre-existing file with content that matches the framework asset
+      const commandPath = path.join(sandbox.workspace, '.opencode', 'commands', 'sc-agent.md')
+      const commandContent = await readFile(path.join(import.meta.dir, '..', '.opencode', 'commands', 'sc-agent.md'), 'utf8')
+      await mkdir(path.dirname(commandPath), { recursive: true })
+      await writeFile(commandPath, commandContent, 'utf8')
+
+      // Install the framework (should adopt the existing file)
+      await runCli(sandbox.workspace, ['install', '--scope', 'project'], { OPENCODE_CONFIG_DIR: sandbox.globalConfigDir })
+
+      // Verify the file is still there
+      expect(await readFile(commandPath, 'utf8')).toBe(commandContent)
+
+      // Check the install state to see if the file was recorded
+      const statePath = path.join(sandbox.workspace, '.opencode', 'super-opencode', 'install-state.json')
+      const state = await readJson(statePath)
+      
+      // Verify that the file is in the state with origin "adopted"
+      expect(state.files['.opencode/commands/sc-agent.md']).toBeDefined()
+      expect(state.files['.opencode/commands/sc-agent.md'].origin).toBe('adopted')
+
+      // Uninstall the framework
+      const report = await uninstallFramework({
+        scope: 'project',
+        projectRoot: sandbox.workspace,
+        env: { ...process.env, OPENCODE_CONFIG_DIR: sandbox.globalConfigDir },
+      })
+
+      // Verify the file is still there after uninstall
+      expect(await readFile(commandPath, 'utf8')).toBe(commandContent)
+      
+      // Verify the report indicates the file was skipped
+      const skippedItem = report.items.find(item => 
+        item.name === '.opencode/commands/sc-agent.md' && 
+        item.status === 'skipped'
+      )
+      expect(skippedItem).toBeDefined()
+      expect(skippedItem?.detail).toContain('unmanaged')
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
+  })
+
   test('uninstalls project scope cleanly', async () => {
     const sandbox = await createSandbox('uninstall-project')
 
