@@ -379,11 +379,6 @@ export async function removeFrameworkTuiConfig(options: {
   return { changed: true, removedFile: false }
 }
 
-/** Returns the supplied scope detections unchanged. */
-export async function detectInstalledScopes(input: ScopeDetection[]): Promise<ScopeDetection[]> {
-  return input
-}
-
 /** Builds a standard report item for config file writes. */
 export function configReportItems(kind: "opencode" | "tui", changed: boolean, created: boolean): ReportItem[] {
   if (changed) {

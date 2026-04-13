@@ -91,13 +91,17 @@ export type ReportItem = {
   detail?: string
 }
 
+export type McpDiagnosticStatus = Extract<
+  ReportStatus,
+  | "configured and enabled"
+  | "configured but disabled by missing env"
+  | "configured but disabled by missing binary"
+  | "configured but requires auth/manual setup"
+>
+
 export type McpDiagnostic = {
   name: string
-  status:
-    | "configured and enabled"
-    | "configured but disabled by missing env"
-    | "configured but disabled by missing binary"
-    | "configured but requires auth/manual setup"
+  status: McpDiagnosticStatus
   enabled: boolean
   missingEnv: string[]
   missingBinaries: string[]

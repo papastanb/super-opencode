@@ -55,8 +55,8 @@ async function assertGlobalInstallLayout(globalConfigDir) {
 }
 
 beforeAll(async () => {
-  await execFileAsync('bun', ['run', 'build'], { cwd: projectRoot, env: process.env })
-})
+  await execFileAsync('bun', ['run', 'build'], { cwd: projectRoot, env: process.env, timeout: 60000 })
+}, 120000)
 
 describe('Package surface', () => {
   test('package exposes explicit server and tui targets', async () => {
