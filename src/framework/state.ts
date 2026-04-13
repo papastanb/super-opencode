@@ -1,5 +1,6 @@
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises"
+import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises"
 import path from "node:path"
+import { randomUUID } from "node:crypto"
 
 import type { FrameworkInstallState, Scope } from "./types.js"
 
@@ -39,7 +40,20 @@ export async function readInstallState(filePath: string): Promise<FrameworkInsta
 /** Persists the framework state used for idempotent updates and safe uninstalls. */
 export async function writeInstallState(filePath: string, state: FrameworkInstallState): Promise<void> {
   await mkdir(path.dirname(filePath), { recursive: true })
-  await writeFile(filePath, `${JSON.stringify(state, null, 2)}\n`, "utf8")
+  const tempPath = `${filePath}.${randomUUID()}.tmp`
+  await writeFile(tempPath, `${JSON.stringify(state, null, 2)}\n`, "utf8")
+
+  try {
+    await rename(tempPath, filePath)
+  } catch (error) {
+    if (!["EEXIST", "EPERM"].includes((error as NodeJS.ErrnoException).code ?? "")) {
+      await rm(tempPath, { force: true })
+      throw error
+    }
+
+    await rm(filePath, { force: true })
+    await rename(tempPath, filePath)
+  }
 }
 
 /** Removes the persisted framework state file for a scope. */

@@ -67,7 +67,8 @@ With Bun:
 bunx super-opencode-framework status --scope project
 bunx super-opencode-framework update --scope project
 bunx super-opencode-framework uninstall --scope project
-bunx super-opencode-framework install --force
+bunx super-opencode-framework install --scope project --force
+bunx super-opencode-framework install --scope global --force
 ```
 
 With npm:
@@ -76,7 +77,8 @@ With npm:
 npx super-opencode-framework status --scope project
 npx super-opencode-framework update --scope project
 npx super-opencode-framework uninstall --scope project
-npx super-opencode-framework install --force
+npx super-opencode-framework install --scope project --force
+npx super-opencode-framework install --scope global --force
 ```
 
 ### 3. Scope Behavior

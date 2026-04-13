@@ -16,7 +16,7 @@ async function isExecutable(filePath: string): Promise<boolean> {
 }
 
 function candidateExecutables(binary: string, env: NodeJS.ProcessEnv): string[] {
-  const pathEntries = (env.PATH ?? "").split(path.delimiter).filter(Boolean)
+  const pathEntries = (env.PATH ?? "").split(path.delimiter)
 
   if (process.platform !== "win32") {
     return pathEntries.map((entry) => path.join(entry, binary))

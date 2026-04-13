@@ -27,8 +27,6 @@ export const SuperOpenCodePlugin: Plugin = async ({ client, worktree }) => {
     return emptyHooks()
   }
 
-  runtimeState[runtimeLoadMarker] = true
-
   await client.app.log({
     body: {
       service: "super-opencode",
@@ -36,6 +34,8 @@ export const SuperOpenCodePlugin: Plugin = async ({ client, worktree }) => {
       message: "Super OpenCode plugin initialized",
     },
   })
+
+  runtimeState[runtimeLoadMarker] = true
 
   return {
     ...createSystemHooks(),
