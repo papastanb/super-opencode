@@ -30,8 +30,8 @@ const rawPackOutput = execSync(`${npmCommand} pack --dry-run --json --loglevel=e
 const packSummary = JSON.parse(rawPackOutput)
 const packedFiles = Array.isArray(packSummary) ? packSummary[0]?.files ?? [] : []
 const packedPaths = packedFiles.map((entry) => entry.path)
-const forbiddenPrefixes = ['docs/memory/', '.opencode/package-lock.json', '.opencode/package.json']
-const forbiddenPaths = ['.opencode/README.md']
+const forbiddenPrefixes = ['docs/', '.opencode/package-lock.json', '.opencode/package.json']
+const forbiddenPaths = ['.opencode/README.md', 'pr-body.md', 'pr-body-v2.md']
 
 for (const prefix of forbiddenPrefixes) {
   const offendingPath = packedPaths.find((candidate) => candidate.startsWith(prefix))

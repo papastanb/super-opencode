@@ -3,10 +3,6 @@ import { existsSync } from "node:fs"
 const requiredPaths = [
   "AGENTS.md",
   "ARCHITECTURE.md",
-  "docs/PORTING_PLAN.md",
-  "docs/memory/status.md",
-  "docs/memory/implementation-plan-tracking.md",
-  "docs/memory/sessions/active.md",
   "opencode.json",
   "package.json",
   "tsconfig.json",
@@ -14,6 +10,7 @@ const requiredPaths = [
   ".opencode/commands",
   ".opencode/agents",
   ".opencode/skills",
+  ".opencode/instructions/opencode-core.md",
 ]
 
 const missing = requiredPaths.filter((path) => !existsSync(path))

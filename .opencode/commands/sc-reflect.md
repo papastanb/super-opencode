@@ -13,7 +13,7 @@ Behavior:
 - evaluate whether the work followed the intended plan and constraints
 - identify missing information, remaining work, and whether the task is truly done
 - write back only the useful conclusions to Serena memory when they improve future continuity
-- promote conclusions into `docs/memory/` only when they are durable, checkpoint-worthy, or needed for human-readable handoff
+- promote conclusions into committed repo files only when they are durable public documentation rather than session scratch state
 
 Preferred Serena tools:
 - `list_memories`

@@ -14,3 +14,14 @@ upstream-superclaude/
 PROJECT_INDEX.md
 PROJECT_INDEX.json
 .npmrc
+docs/
+pr-body.md
+pr-body-v2.md
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer

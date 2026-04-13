@@ -26,8 +26,8 @@ describe('Project Structure', () => {
     expect(existsSync(join(projectRoot, 'AGENTS.md'))).toBe(true)
   })
 
-  test('docs/PORTING_PLAN.md exists', () => {
-    expect(existsSync(join(projectRoot, 'docs/PORTING_PLAN.md'))).toBe(true)
+  test('runtime instructions exist', () => {
+    expect(existsSync(join(projectRoot, '.opencode/instructions/opencode-core.md'))).toBe(true)
   })
 })
 

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs'
+import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 
@@ -37,12 +37,8 @@ describe('Super OpenCode plugin hooks', () => {
     expect(output.parts).toHaveLength(0)
   })
 
-  test('compaction hook injects project memory snapshots', async () => {
+  test('compaction hook injects persistence guidance', async () => {
     const worktree = mkdtempSync(path.join(tmpdir(), 'super-opencode-'))
-    mkdirSync(path.join(worktree, 'docs', 'memory', 'sessions'), { recursive: true })
-    writeFileSync(path.join(worktree, 'docs', 'memory', 'status.md'), '# Status')
-    writeFileSync(path.join(worktree, 'docs', 'memory', 'implementation-plan-tracking.md'), '# Tracking')
-    writeFileSync(path.join(worktree, 'docs', 'memory', 'sessions', 'active.md'), '# Active')
 
     const hooks = createCompactionHooks(worktree)
     const output = { context: [] }
@@ -50,8 +46,7 @@ describe('Super OpenCode plugin hooks', () => {
     await hooks['experimental.session.compacting']({}, output)
 
     expect(output.context).toHaveLength(1)
-    expect(output.context[0]).toContain('# Status')
-    expect(output.context[0]).toContain('# Active')
-    expect(output.context[0]).toContain('# Tracking')
+    expect(output.context[0]).toContain('## Super OpenCode Memory')
+    expect(output.context[0]).toContain('Serena is the persistence source of truth')
   })
 })

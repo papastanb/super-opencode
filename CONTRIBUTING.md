@@ -6,7 +6,7 @@ Thanks for contributing.
 
 - Read `README.md` for the public package scope.
 - Read `AGENTS.md` for repo-specific working rules.
-- Keep the main files short and move detailed implementation notes into `docs/memory/` when they are project-internal.
+- Keep the main files short and avoid committing session notes, private checkpoints, or other maintainer-only scratch files.
 
 ## Contribution Scope
 
@@ -75,7 +75,7 @@ git commit -m "docs: align public usage guides with current command routing"
 - CI should pass.
 - User-facing claims should match the actual package behavior.
 - Public docs should stay in English.
-- Repo-internal memory files should not be treated as published API.
+- Maintainer scratch files, local review drafts, and private notes should not be committed.
 
 ## Community Standards
 

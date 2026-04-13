@@ -41,7 +41,7 @@
     ".opencode/skills/**/SKILL.md",
     ".opencode/plugins/**/*.ts",
     ".opencode/examples/*.json",
-    "docs/instructions/opencode-core.md",
+    ".opencode/instructions/*.md",
     "scripts/install-project.mjs",
     "README.md",
     "INSTALL.md",

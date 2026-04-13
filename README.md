@@ -34,9 +34,9 @@ This installs the Super OpenCode scaffold into the current project:
 - `.opencode/agents`
 - `.opencode/skills`
 - `.opencode/plugins`
-- `docs/instructions/opencode-core.md`
+- `.opencode/instructions/opencode-core.md`
 
-If `opencode.json` already exists, the installer appends `docs/instructions/opencode-core.md` to the `instructions` array when needed.
+If `opencode.json` already exists, the installer appends `.opencode/instructions/opencode-core.md` to the `instructions` array when needed.
 
 ## Develop This Repository
 
@@ -69,7 +69,7 @@ The repo config enables `serena` and keeps the other MCPs available but disabled
 
 This repository is the source and development home for Super OpenCode.
 
-The npm package is intended to scaffold Super OpenCode into existing OpenCode projects. Internal planning files under `docs/memory/` are not part of the published package contract.
+The npm package is intended to scaffold Super OpenCode into existing OpenCode projects. Internal session notes, review drafts, and other maintainer-only artifacts are not part of the public repository or package contract.
 
 ## Publishing
 

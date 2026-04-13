@@ -4,17 +4,16 @@
 
 This file carries the OpenCode-specific behavioral layer for the Super OpenCode project.
 
-The local porting plan in `docs/PORTING_PLAN.md` is the project frame.
-The behavioral source to interpret and port is the upstream SuperClaude framework in `upstream-superclaude/` plus its public documentation.
+The behavioral source to interpret and port is the upstream SuperClaude framework plus its public documentation.
 
 ## Execution Rules
 
 - Prefer OpenCode-native primitives before adding plugin logic.
 - Port intent and workflow value first, not a word-for-word clone of upstream prompts.
-- Keep Phase 1 pragmatic: clear commands, focused agents, minimal mode skills, documented MCP skeleton.
+- Keep the framework pragmatic: clear commands, focused agents, minimal mode skills, and documented MCP expectations.
 - Respect command boundaries. Planning commands stop at plans, research commands stop at reports, diagnostic commands do not fix by default.
 - For complex work, create and maintain TodoWrite state.
-- For repo exploration, prefer `glob`, `grep`, `read`, `explore`, and local upstream references before speculation.
+- For repo exploration, prefer `glob`, `grep`, `read`, `explore`, and local references before speculation.
 
 ## Tooling Directive
 
@@ -30,7 +29,7 @@ The behavioral source to interpret and port is the upstream SuperClaude framewor
 
 The first command family is exposed as `/sc-*`.
 
-Phase 1 commands:
+Primary commands:
 
 - `/sc-brainstorm`
 - `/sc-design`
@@ -50,11 +49,11 @@ Use the dedicated `.opencode/agents/` prompts as the OpenCode translation of ups
 
 - Route to the smallest relevant specialist set.
 - Use multi-agent coordination only when the task truly spans domains.
-- Include `pm-agent` when session state, progress, documentation, or continuity matters.
+- Include `pm-agent` when session state, progress tracking, or continuity matters.
 
 ## Mode Support
 
-Phase 1 provides minimal support for upstream modes through `.opencode/skills/`.
+The framework provides minimal support for upstream-inspired modes through `.opencode/skills/`.
 
 - brainstorming
 - task management
@@ -69,16 +68,13 @@ Load the relevant skill before acting when a mode clearly applies.
 
 The MCP configuration in `opencode.json` is the active integration surface.
 
-- `context7`, `sequential`, `playwright`, `chrome-devtools` are recommended and can be enabled safely when available.
+- `context7`, `sequential`, `playwright`, `chrome-devtools` are recommended when available.
 - `tavily` is recommended for research workflows when an API key exists.
 - `serena` is the persistence source of truth for this framework.
 - `morph` remains optional.
 - If an MCP is unavailable, continue with native tools and note the degradation explicitly.
 
-## PM Agent Adaptation
-
-Upstream `pm-agent` relies heavily on Serena memory. In this repo, Serena is now the primary persistence layer and must be used when available.
+## Persistence
 
 - Use Serena memory as the source of truth for session continuity.
-- Use project memory files in `docs/memory/` as the human-readable projection and fallback.
-- Keep session state mirrored in `status.md`, `implementation-plan-tracking.md`, and `sessions/active.md` at checkpoints and milestones.
+- If Serena is unavailable, state clearly that the session is operating in degraded persistence mode.

@@ -23,7 +23,7 @@ User request
 Defines repo and framework behavior.
 
 - `AGENTS.md`
-- `docs/instructions/opencode-core.md`
+- `.opencode/instructions/opencode-core.md`
 
 ### Command Layer
 
@@ -91,7 +91,7 @@ The npm package is designed to scaffold the runtime assets a consuming OpenCode 
 - `.opencode/skills/**/SKILL.md`
 - `.opencode/plugins/**/*.ts`
 - `.opencode/examples/*.json`
-- `docs/instructions/opencode-core.md`
+- `.opencode/instructions/*.md`
 - installer script and package metadata
 
 Repo-internal planning and memory files are not part of the public package contract.
@@ -122,9 +122,7 @@ super-opencode/
     skills/
     plugins/
     examples/
-  docs/
     instructions/
-    memory/
   scripts/
   tests/
   package.json

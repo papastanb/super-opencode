@@ -12,7 +12,7 @@ const installEntries = [
   ['.opencode/agents', '.opencode/agents'],
   ['.opencode/skills', '.opencode/skills'],
   ['.opencode/plugins', '.opencode/plugins'],
-  ['docs/instructions/opencode-core.md', 'docs/instructions/opencode-core.md'],
+  ['.opencode/instructions', '.opencode/instructions'],
 ]
 
 function parseArgs(argv) {
@@ -47,7 +47,7 @@ async function ensureProjectInstructions(targetRoot) {
 
   const config = JSON.parse(await readFile(opencodeConfigPath, 'utf8'))
   const instructions = Array.isArray(config.instructions) ? config.instructions : []
-  const requiredInstruction = 'docs/instructions/opencode-core.md'
+  const requiredInstruction = '.opencode/instructions/opencode-core.md'
 
   if (!instructions.includes(requiredInstruction)) {
     instructions.push(requiredInstruction)
@@ -71,13 +71,13 @@ async function installProject(targetRoot, force) {
   console.log('- .opencode/agents')
   console.log('- .opencode/skills')
   console.log('- .opencode/plugins')
-  console.log('- docs/instructions/opencode-core.md')
+  console.log('- .opencode/instructions/opencode-core.md')
   console.log('')
 
   if (updatedConfig) {
-    console.log('Updated opencode.json instructions with docs/instructions/opencode-core.md')
+    console.log('Updated opencode.json instructions with .opencode/instructions/opencode-core.md')
   } else {
-    console.log('No opencode.json found. Add docs/instructions/opencode-core.md to your project instructions manually.')
+    console.log('No opencode.json found. Add .opencode/instructions/opencode-core.md to your project instructions manually.')
   }
 
   console.log('')

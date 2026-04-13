@@ -37,7 +37,7 @@ Review these locations after installation:
 - `.opencode/agents`
 - `.opencode/skills`
 - `.opencode/plugins`
-- `docs/instructions/opencode-core.md`
+- `.opencode/instructions/opencode-core.md`
 
 ### 4. Configure MCPs
 
@@ -88,7 +88,7 @@ Add this path manually to your OpenCode config:
 
 ```json
 {
-  "instructions": ["docs/instructions/opencode-core.md"]
+    "instructions": [".opencode/instructions/opencode-core.md"]
 }
 ```
 

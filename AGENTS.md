@@ -7,40 +7,23 @@ Porter SuperClaude vers OpenCode sous forme d'un framework installable et struct
 ## Regles de contexte
 
 - Garder les fichiers principaux tres courts.
-- Mettre les details dans `docs/memory/`.
 - Ne charger un fichier secondaire que si la tache l'exige.
-- Mettre a jour la memoire au fil de l'eau, pas en fin de sprint.
-- Avant toute compaction, appliquer le protocole de checkpoint de `docs/memory/sessions/README.md`.
+- Utiliser Serena comme source de verite pour la continuite de session quand elle est disponible.
 - Utiliser le plus petit ensemble pertinent de skills, sous-agents, MCPs et options/flags qui ameliore materiellement la qualite d'execution.
 - Charger d'abord les skills de processus, puis les skills metier ou d'implementation.
 - Utiliser les MCPs quand ils apportent un gain reel de validation, documentation officielle, exploration, raisonnement, persistance ou confiance de release.
 - Si un skill ou MCP prefere est indisponible, expliciter la degradation et utiliser la meilleure alternative.
+- Ne pas committer de notes de session, checkpoints locaux, secrets, ou artefacts de review temporaires.
 
 ## Ordre de lecture par defaut
 
 1. `AGENTS.md`
-2. `docs/memory/status.md`
-3. `docs/memory/sessions/active.md`
+2. `README.md`
+3. `ARCHITECTURE.md`
 
 Lire ensuite seulement si necessaire :
 
-- `ARCHITECTURE.md` pour structure et responsabilites
-- `docs/PORTING_PLAN.md` pour le plan de reference
-- `docs/memory/implementation-plan-tracking.md` pour l'avancement reel du plan
-- `docs/memory/decisions.md` pour les decisions durables
-- `docs/memory/commands-map.md` pour les commandes
-- `docs/memory/agents-map.md` pour les agents
-- `docs/memory/modes-map.md` pour les modes
-- `docs/memory/mcp-strategy.md` pour les MCP
-- `docs/memory/tooling-research.md` pour skills, plugins et LSP utiles au projet
-- `docs/memory/plugin-engine.md` pour les plugins et hooks
-- `docs/memory/persistence-design.md` pour save/load et checkpoints
-- `docs/memory/packaging-release.md` pour packaging et publication
-
-## Mise a jour memoire
-
-- `status.md` : etat global du projet
-- `implementation-plan-tracking.md` : suivi reel des phases 0 a 5
-- `decisions.md` : decisions durables
-- `sessions/active.md` : reprise immediate de session
-- `sessions/archive/` : checkpoints horodates avant compaction ou jalon important
+- `INSTALL.md` pour l'installation et la publication
+- `COMMANDS.md` pour les commandes
+- `USAGE.md` pour les usages
+- `.opencode/instructions/opencode-core.md` pour la couche comportementale runtime

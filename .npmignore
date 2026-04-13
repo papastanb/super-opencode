@@ -4,3 +4,14 @@ tests/
 coverage/
 *.log
 .npmrc
+docs/
+pr-body.md
+pr-body-v2.md
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer

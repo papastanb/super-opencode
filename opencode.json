@@ -3,7 +3,7 @@
   "default_agent": "build",
   "instructions": [
     "AGENTS.md",
-    "docs/instructions/opencode-core.md"
+    ".opencode/instructions/opencode-core.md"
   ],
   "compaction": {
     "auto": true,

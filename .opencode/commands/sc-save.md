@@ -14,7 +14,7 @@ Behavior:
 - write at minimum `last_session`, `next_actions`, and `pm_context`
 - write `checkpoint` when the work is long, risky, or paused mid-flight
 - update `summary`, `decision`, or `learning/*` only when there is meaningful new information
-- synchronize the human-readable projection in `docs/memory/` after the save, but keep the projection limited to the files materially affected by the new recovery state
+- keep any file-based documentation limited to durable, public project docs rather than session scratch files
 
 Preferred Serena tools:
 - `write_memory`
