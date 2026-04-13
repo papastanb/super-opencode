@@ -6,25 +6,61 @@
 - Bun 1.3.9+
 - OpenCode
 
-## Install In An Existing Project
+## Install In OpenCode
+
+### Recommended Flow
+
+1. Open OpenCode.
+2. Press `Ctrl+P`.
+3. Open `plugins`.
+4. Install `super-opencode-framework`.
+
+This is the preferred path when you want to install the framework as an OpenCode plugin/package from the editor UX.
+
+## Manual Install In An Existing Project
 
 ### 1. Install The Package
+
+With Bun:
 
 ```bash
 bun add -d super-opencode-framework
 ```
 
+With npm:
+
+```bash
+npm install -D super-opencode-framework
+```
+
 ### 2. Scaffold The OpenCode Assets
+
+With Bun:
 
 ```bash
 bunx super-opencode-framework install
 ```
 
+With npm:
+
+```bash
+npx super-opencode-framework install
+```
+
 Optional flags:
+
+With Bun:
 
 ```bash
 bunx super-opencode-framework install --target /path/to/project
 bunx super-opencode-framework install --force
+```
+
+With npm:
+
+```bash
+npx super-opencode-framework install --target /path/to/project
+npx super-opencode-framework install --force
 ```
 
 ### 3. Verify Your Project Config
@@ -94,8 +130,16 @@ Add this path manually to your OpenCode config:
 
 ### Reinstall The Scaffold
 
+With Bun:
+
 ```bash
 bunx super-opencode-framework install --force
+```
+
+With npm:
+
+```bash
+npx super-opencode-framework install --force
 ```
 
 ### Validate The Package Locally
