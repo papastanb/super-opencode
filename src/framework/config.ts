@@ -1,7 +1,8 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises"
+import { createHash } from "node:crypto"
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises"
 import path from "node:path"
 
-import { applyEdits, modify, parse } from "jsonc-parser"
+import { applyEdits, modify, parse, printParseErrorCode, type ParseError } from "jsonc-parser"
 
 import type { FrameworkInstallState, FrameworkManifest, McpDiagnostic, ReportItem, Scope, ScopeDetection } from "./types.js"
 
@@ -13,6 +14,7 @@ type ConfigPatchResult = {
   addedPlugin: boolean
   addedInstructions: string[]
   addedMcpKeys: string[]
+  addedMcpHashes: Record<string, string>
 }
 
 type TuiPatchResult = {
@@ -23,6 +25,65 @@ type TuiPatchResult = {
 
 function isObject(value: unknown): value is JsonObject {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value)
+}
+
+function stableJsonValue(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((entry) => stableJsonValue(entry))
+  }
+
+  if (!isObject(value)) {
+    return value
+  }
+
+  return Object.keys(value)
+    .sort()
+    .reduce<JsonObject>((result, key) => {
+      result[key] = stableJsonValue(value[key])
+      return result
+    }, {})
+}
+
+function hashJsonValue(value: unknown): string {
+  return createHash("sha256").update(JSON.stringify(stableJsonValue(value))).digest("hex")
+}
+
+function getLineAndColumn(text: string, offset: number): { line: number; column: number } {
+  let line = 1
+  let column = 1
+
+  for (let index = 0; index < offset; index += 1) {
+    if (text[index] === "\n") {
+      line += 1
+      column = 1
+      continue
+    }
+
+    column += 1
+  }
+
+  return { line, column }
+}
+
+function formatJsoncParseError(filePath: string, raw: string, error: ParseError): Error {
+  const { line, column } = getLineAndColumn(raw, error.offset)
+  return new Error(
+    `Invalid JSONC in ${filePath} at ${line}:${column}: ${printParseErrorCode(error.error)}. Fix the file before running framework bootstrap.`,
+  )
+}
+
+function parseJsoncObject(raw: string, filePath: string): JsonObject {
+  const errors: ParseError[] = []
+  const parsed = parse(raw, errors)
+  if (errors.length > 0) {
+    throw formatJsoncParseError(filePath, raw, errors[0])
+  }
+
+  if (!isObject(parsed)) {
+    throw new Error(`Invalid JSONC in ${filePath}: root value must be an object.`)
+  }
+
+  return parsed
 }
 
 function mergeObjects(base: JsonObject, override: JsonObject): JsonObject {
@@ -74,12 +135,7 @@ function jsonValuesEqual(left: unknown, right: unknown): boolean {
 async function readJsoncObject(filePath: string): Promise<{ created: boolean; value: JsonObject }> {
   try {
     const raw = await readFile(filePath, "utf8")
-    const parsed = parse(raw)
-    if (!isObject(parsed)) {
-      return { created: false, value: {} }
-    }
-
-    return { created: false, value: parsed }
+    return { created: false, value: parseJsoncObject(raw, filePath) }
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
       return { created: true, value: {} }
@@ -87,6 +143,11 @@ async function readJsoncObject(filePath: string): Promise<{ created: boolean; va
 
     throw error
   }
+}
+
+/** Validates that an existing JSONC config file parses cleanly as an object. */
+export async function validateJsoncConfigFile(filePath: string): Promise<void> {
+  await readJsoncObject(filePath)
 }
 
 const jsonFormattingOptions = {
@@ -135,17 +196,9 @@ async function writeJson(filePath: string, value: JsonObject): Promise<void> {
     return
   }
 
-  try {
-    const parsed = parse(originalText)
-    if (!isObject(parsed)) {
-      throw new Error("Config root is not an object")
-    }
-
-    const updatedText = applyJsoncObjectEdits(originalText, parsed, value)
-    await writeFile(filePath, updatedText.endsWith("\n") ? updatedText : `${updatedText}\n`, "utf8")
-  } catch {
-    await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8")
-  }
+  const parsed = parseJsoncObject(originalText, filePath)
+  const updatedText = applyJsoncObjectEdits(originalText, parsed, value)
+  await writeFile(filePath, updatedText.endsWith("\n") ? updatedText : `${updatedText}\n`, "utf8")
 }
 
 function normalizePluginArray(input: unknown): Array<string | [string, Record<string, unknown>]> {
@@ -184,6 +237,7 @@ export async function patchOpencodeConfig(options: {
   const { created, value } = await readJsoncObject(options.filePath)
   const config: JsonObject = { ...value }
   let changed = created
+  const addedMcpHashes: Record<string, string> = { ...(options.state?.ownership.addedMcpHashes ?? {}) }
 
   if (typeof config.$schema !== "string") {
     config.$schema = options.manifest.config.opencode.schema
@@ -218,7 +272,12 @@ export async function patchOpencodeConfig(options: {
   const mergedMcp: JsonObject = { ...existingMcp }
   const addedMcpKeys: string[] = []
   for (const diagnostic of options.diagnostics) {
-    const currentValue = isObject(mergedMcp[diagnostic.name]) ? (mergedMcp[diagnostic.name] as JsonObject) : undefined
+    const currentEntry = mergedMcp[diagnostic.name]
+    const currentValue = isObject(currentEntry) ? (currentEntry as JsonObject) : undefined
+    const wasPreviouslyManaged = options.state?.ownership.addedMcpKeys.includes(diagnostic.name) ?? false
+    const previousManagedHash = options.state?.ownership.addedMcpHashes[diagnostic.name]
+    const divergedManagedEntry = currentValue !== undefined && previousManagedHash !== undefined && hashJsonValue(currentValue) !== previousManagedHash
+
     if (!currentValue) {
       addedMcpKeys.push(diagnostic.name)
     }
@@ -230,6 +289,10 @@ export async function patchOpencodeConfig(options: {
     }
 
     mergedMcp[diagnostic.name] = mergedValue
+
+    if (currentValue === undefined || (wasPreviouslyManaged && (previousManagedHash === undefined || !divergedManagedEntry))) {
+      addedMcpHashes[diagnostic.name] = hashJsonValue(mergedValue)
+    }
   }
   config.mcp = mergedMcp
 
@@ -243,6 +306,7 @@ export async function patchOpencodeConfig(options: {
     addedPlugin,
     addedInstructions,
     addedMcpKeys,
+    addedMcpHashes,
   }
 }
 
@@ -293,19 +357,38 @@ function removeInstructions(instructions: string[], managed: string[]): string[]
   return instructions.filter((entry) => !managed.includes(entry))
 }
 
+function hasMeaningfulConfigContent(config: JsonObject): boolean {
+  return Object.keys(config).some((key) => key !== "$schema")
+}
+
 /** Removes framework-managed opencode.json entries that were added for this scope. */
 export async function removeFrameworkConfig(options: {
   filePath: string
   manifest: FrameworkManifest
   state: FrameworkInstallState
-}): Promise<{ changed: boolean; removedFile: boolean }> {
+}): Promise<{
+  changed: boolean
+  removedFile: boolean
+  conflicts: string[]
+  remainingAddedMcpKeys: string[]
+  remainingAddedMcpHashes: Record<string, string>
+}> {
   const { created, value } = await readJsoncObject(options.filePath)
   if (created) {
-    return { changed: false, removedFile: false }
+    return {
+      changed: false,
+      removedFile: false,
+      conflicts: [],
+      remainingAddedMcpKeys: [],
+      remainingAddedMcpHashes: {},
+    }
   }
 
   const config: JsonObject = { ...value }
   let changed = false
+  const conflicts: string[] = []
+  const remainingAddedMcpKeys: string[] = []
+  const remainingAddedMcpHashes: Record<string, string> = {}
 
   if (options.state.ownership.addedOpencodePlugin) {
     const plugins = removePluginSpec(normalizePluginArray(config.plugin), options.manifest.config.opencode.plugin)
@@ -330,22 +413,65 @@ export async function removeFrameworkConfig(options: {
   if (options.state.ownership.addedMcpKeys.length > 0 && isObject(config.mcp)) {
     const nextMcp = { ...config.mcp }
     for (const key of options.state.ownership.addedMcpKeys) {
+      if (!Object.prototype.hasOwnProperty.call(nextMcp, key)) {
+        continue
+      }
+
+      const expectedHash = options.state.ownership.addedMcpHashes[key]
+      if (expectedHash === undefined) {
+        conflicts.push(key)
+        remainingAddedMcpKeys.push(key)
+        continue
+      }
+
+      if (expectedHash !== undefined && hashJsonValue(nextMcp[key]) !== expectedHash) {
+        conflicts.push(key)
+        remainingAddedMcpKeys.push(key)
+        remainingAddedMcpHashes[key] = expectedHash
+        continue
+      }
+
       delete nextMcp[key]
+      changed = true
     }
+
     if (Object.keys(nextMcp).length > 0) {
       config.mcp = nextMcp
-    } else {
+    } else if (Object.prototype.hasOwnProperty.call(config, "mcp")) {
       delete config.mcp
+      changed = true
     }
-    changed = true
+  }
+
+  if (options.state.ownership.createdOpencodeConfig && conflicts.length === 0 && !hasMeaningfulConfigContent(config)) {
+    await rm(options.filePath, { force: true })
+    return {
+      changed: true,
+      removedFile: true,
+      conflicts,
+      remainingAddedMcpKeys,
+      remainingAddedMcpHashes,
+    }
   }
 
   if (!changed) {
-    return { changed: false, removedFile: false }
+    return {
+      changed: false,
+      removedFile: false,
+      conflicts,
+      remainingAddedMcpKeys,
+      remainingAddedMcpHashes,
+    }
   }
 
   await writeJson(options.filePath, config)
-  return { changed: true, removedFile: false }
+  return {
+    changed: true,
+    removedFile: false,
+    conflicts,
+    remainingAddedMcpKeys,
+    remainingAddedMcpHashes,
+  }
 }
 
 /** Removes the framework TUI plugin entry from the scope-local tui.json during uninstall. */
@@ -372,7 +498,17 @@ export async function removeFrameworkTuiConfig(options: {
   }
 
   if (!changed) {
+    if (options.state.ownership.createdTuiConfig && !hasMeaningfulConfigContent(config)) {
+      await rm(options.filePath, { force: true })
+      return { changed: true, removedFile: true }
+    }
+
     return { changed: false, removedFile: false }
+  }
+
+  if (options.state.ownership.createdTuiConfig && !hasMeaningfulConfigContent(config)) {
+    await rm(options.filePath, { force: true })
+    return { changed: true, removedFile: true }
   }
 
   await writeJson(options.filePath, config)

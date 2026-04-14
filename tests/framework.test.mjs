@@ -309,6 +309,47 @@ describe('Framework bootstrap', () => {
     }
   })
 
+  test('preserves a user-modified framework-added MCP entry during uninstall', async () => {
+    const sandbox = await createSandbox('uninstall-mcp-conflict')
+
+    try {
+      await runCli(sandbox.workspace, ['install', '--scope', 'project'], {
+        OPENCODE_CONFIG_DIR: sandbox.globalConfigDir,
+        CONTEXT7_API_KEY: '',
+        TAVILY_API_KEY: '',
+        MORPH_API_KEY: '',
+      })
+
+      const opencodePath = path.join(sandbox.workspace, 'opencode.json')
+      const statePath = path.join(sandbox.workspace, '.opencode', 'super-opencode', 'install-state.json')
+      const config = await readJson(opencodePath)
+      config.mcp.context7.url = 'https://example.invalid/custom-context7'
+      await writeFile(opencodePath, `${JSON.stringify(config, null, 2)}\n`, 'utf8')
+
+      const report = await uninstallFramework({
+        scope: 'project',
+        projectRoot: sandbox.workspace,
+        env: {
+          ...process.env,
+          OPENCODE_CONFIG_DIR: sandbox.globalConfigDir,
+          CONTEXT7_API_KEY: '',
+          TAVILY_API_KEY: '',
+          MORPH_API_KEY: '',
+        },
+      })
+
+      const preservedConfig = await readJson(opencodePath)
+      expect(preservedConfig.mcp.context7.url).toBe('https://example.invalid/custom-context7')
+      expect(report.items.some((item) => item.kind === 'mcp' && item.name === 'context7' && item.status === 'conflict/manual action required')).toBe(true)
+
+      const state = await readJson(statePath)
+      expect(state.ownership.addedMcpKeys).toContain('context7')
+      expect(typeof state.ownership.addedMcpHashes.context7).toBe('string')
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
+  })
+
   test('does not delete pre-existing identical files during uninstall', async () => {
     const sandbox = await createSandbox('uninstall-adopted-files')
 
@@ -364,10 +405,52 @@ describe('Framework bootstrap', () => {
 
       expect(stdout).toContain('Action: uninstall')
 
-      const opencodeConfig = await readJson(path.join(sandbox.workspace, 'opencode.json'))
-      const tuiConfig = await readJson(path.join(sandbox.workspace, 'tui.json'))
-      expect(opencodeConfig.plugin ?? []).not.toContain('super-opencode-framework')
-      expect(tuiConfig.plugin ?? []).not.toContain('super-opencode-framework')
+      await expect(readFile(path.join(sandbox.workspace, 'opencode.json'), 'utf8')).rejects.toMatchObject({ code: 'ENOENT' })
+      await expect(readFile(path.join(sandbox.workspace, 'tui.json'), 'utf8')).rejects.toMatchObject({ code: 'ENOENT' })
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
+  })
+
+  test('fails install without rewriting an invalid opencode.json', async () => {
+    const sandbox = await createSandbox('invalid-opencode-install')
+
+    try {
+      const opencodePath = path.join(sandbox.workspace, 'opencode.json')
+      const invalidJsonc = '{\n  "instructions": ["docs/local.md"\n}\n'
+      await writeFile(opencodePath, invalidJsonc, 'utf8')
+
+      await expect(
+        installFramework({
+          scope: 'project',
+          projectRoot: sandbox.workspace,
+          env: { ...process.env, OPENCODE_CONFIG_DIR: sandbox.globalConfigDir },
+        }),
+      ).rejects.toThrow(/Invalid JSONC/)
+
+      expect(await readFile(opencodePath, 'utf8')).toBe(invalidJsonc)
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
+  })
+
+  test('fails install without rewriting an invalid tui.json', async () => {
+    const sandbox = await createSandbox('invalid-tui-install')
+
+    try {
+      const tuiPath = path.join(sandbox.workspace, 'tui.json')
+      const invalidJsonc = '{\n  "plugin": ["super-opencode-framework",\n}\n'
+      await writeFile(tuiPath, invalidJsonc, 'utf8')
+
+      await expect(
+        installFramework({
+          scope: 'project',
+          projectRoot: sandbox.workspace,
+          env: { ...process.env, OPENCODE_CONFIG_DIR: sandbox.globalConfigDir },
+        }),
+      ).rejects.toThrow(/Invalid JSONC/)
+
+      expect(await readFile(tuiPath, 'utf8')).toBe(invalidJsonc)
     } finally {
       await rm(sandbox.root, { recursive: true, force: true })
     }

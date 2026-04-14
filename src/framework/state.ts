@@ -19,6 +19,28 @@ export function createEmptyState(scope: Scope, packageVersion: string, manifestV
       addedTuiPlugin: false,
       addedInstructions: [],
       addedMcpKeys: [],
+      addedMcpHashes: {},
+    },
+  }
+}
+
+function normalizeInstallState(state: FrameworkInstallState): FrameworkInstallState {
+  const ownership = state.ownership ?? createEmptyState(state.scope, state.packageVersion, state.manifestVersion).ownership
+
+  return {
+    ...state,
+    files: state.files ?? {},
+    ownership: {
+      createdOpencodeConfig: ownership.createdOpencodeConfig ?? false,
+      createdTuiConfig: ownership.createdTuiConfig ?? false,
+      addedOpencodePlugin: ownership.addedOpencodePlugin ?? false,
+      addedTuiPlugin: ownership.addedTuiPlugin ?? false,
+      addedInstructions: Array.isArray(ownership.addedInstructions) ? ownership.addedInstructions : [],
+      addedMcpKeys: Array.isArray(ownership.addedMcpKeys) ? ownership.addedMcpKeys : [],
+      addedMcpHashes:
+        ownership.addedMcpHashes && typeof ownership.addedMcpHashes === "object" && !Array.isArray(ownership.addedMcpHashes)
+          ? ownership.addedMcpHashes
+          : {},
     },
   }
 }
@@ -27,7 +49,7 @@ export function createEmptyState(scope: Scope, packageVersion: string, manifestV
 export async function readInstallState(filePath: string): Promise<FrameworkInstallState | undefined> {
   try {
     const raw = await readFile(filePath, "utf8")
-    return JSON.parse(raw) as FrameworkInstallState
+    return normalizeInstallState(JSON.parse(raw) as FrameworkInstallState)
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
       return undefined

@@ -2,7 +2,13 @@ import { createHash } from "node:crypto"
 import { mkdir, readFile, readdir, rm, rmdir, unlink, writeFile } from "node:fs/promises"
 import path from "node:path"
 
-import { patchOpencodeConfig, patchTuiConfig, removeFrameworkConfig, removeFrameworkTuiConfig } from "./config.js"
+import {
+  patchOpencodeConfig,
+  patchTuiConfig,
+  removeFrameworkConfig,
+  removeFrameworkTuiConfig,
+  validateJsoncConfigFile,
+} from "./config.js"
 import { loadFrameworkManifest } from "./manifest.js"
 import { resolveScopePaths } from "./paths.js"
 import { diagnoseMcpPolicies } from "./prerequisites.js"
@@ -248,6 +254,9 @@ export async function installFramework(options: FrameworkOptions): Promise<Frame
   const diagnostics = await diagnoseMcpPolicies(manifest, options.env ?? process.env)
   report.mcp = diagnostics
 
+  await validateJsoncConfigFile(paths.opencodeConfigPath)
+  await validateJsoncConfigFile(paths.tuiConfigPath)
+
   const assetsChanged = await syncAssets({
     groups: manifest.assetGroups,
     packageRoot: paths.packageRoot,
@@ -265,11 +274,16 @@ export async function installFramework(options: FrameworkOptions): Promise<Frame
     manifest,
     scope: options.scope,
     diagnostics,
+    state,
   })
   state.ownership.createdOpencodeConfig ||= opencodeResult.created
   state.ownership.addedOpencodePlugin ||= opencodeResult.addedPlugin
   state.ownership.addedInstructions = Array.from(new Set([...state.ownership.addedInstructions, ...opencodeResult.addedInstructions]))
   state.ownership.addedMcpKeys = Array.from(new Set([...state.ownership.addedMcpKeys, ...opencodeResult.addedMcpKeys]))
+  state.ownership.addedMcpHashes = {
+    ...state.ownership.addedMcpHashes,
+    ...opencodeResult.addedMcpHashes,
+  }
 
   report.items.push({
     kind: "config",
@@ -390,6 +404,9 @@ export async function uninstallFramework(options: FrameworkOptions): Promise<Fra
     return report
   }
 
+  await validateJsoncConfigFile(paths.opencodeConfigPath)
+  await validateJsoncConfigFile(paths.tuiConfigPath)
+
   const targetBase = options.scope === "global" ? paths.configDir : paths.projectRoot
   let changed = false
   const remainingFiles: typeof state.files = {}
@@ -455,7 +472,20 @@ export async function uninstallFramework(options: FrameworkOptions): Promise<Fra
   })
   if (opencodeResult.changed) {
     changed = true
-    report.items.push({ kind: "config", name: path.basename(paths.opencodeConfigPath), status: "updated" })
+    report.items.push({
+      kind: "config",
+      name: path.basename(paths.opencodeConfigPath),
+      status: opencodeResult.removedFile ? "removed" : "updated",
+    })
+  }
+
+  for (const key of opencodeResult.conflicts) {
+    report.items.push({
+      kind: "mcp",
+      name: key,
+      status: "conflict/manual action required",
+      detail: "Framework-added MCP entry was modified after install and was left in place.",
+    })
   }
 
   const tuiResult = await removeFrameworkTuiConfig({
@@ -465,7 +495,36 @@ export async function uninstallFramework(options: FrameworkOptions): Promise<Fra
   })
   if (tuiResult.changed) {
     changed = true
-    report.items.push({ kind: "config", name: path.basename(paths.tuiConfigPath), status: "updated" })
+    report.items.push({
+      kind: "config",
+      name: path.basename(paths.tuiConfigPath),
+      status: tuiResult.removedFile ? "removed" : "updated",
+    })
+  }
+
+  if (opencodeResult.conflicts.length > 0) {
+    await writeInstallState(paths.statePath, {
+      ...state,
+      files: {},
+      ownership: {
+        createdOpencodeConfig: state.ownership.createdOpencodeConfig && !opencodeResult.removedFile,
+        createdTuiConfig: state.ownership.createdTuiConfig && !tuiResult.removedFile,
+        addedOpencodePlugin: false,
+        addedTuiPlugin: false,
+        addedInstructions: [],
+        addedMcpKeys: opencodeResult.remainingAddedMcpKeys,
+        addedMcpHashes: opencodeResult.remainingAddedMcpHashes,
+      },
+      updatedAt: new Date().toISOString(),
+    })
+    report.restartRequired = changed
+    report.items.push({
+      kind: "runtime",
+      name: "OpenCode runtime",
+      status: "conflict/manual action required",
+      detail: "Uninstall stopped because some framework-managed MCP entries were modified. Install state was preserved for the remaining config cleanup.",
+    })
+    return report
   }
 
   await removeInstallState(paths.statePath)

@@ -81,6 +81,7 @@ export type FrameworkInstallState = {
     addedTuiPlugin: boolean
     addedInstructions: string[]
     addedMcpKeys: string[]
+    addedMcpHashes: Record<string, string>
   }
 }
 
