@@ -412,6 +412,32 @@ describe('Framework bootstrap', () => {
     }
   })
 
+  test('uninstall cleans config and state even when adopted files are preserved', async () => {
+    const sandbox = await createSandbox('uninstall-adopted-cleanup')
+
+    try {
+      const commandPath = path.join(sandbox.workspace, '.opencode', 'commands', 'sc-agent.md')
+      const commandContent = await readFile(path.join(import.meta.dir, '..', '.opencode', 'commands', 'sc-agent.md'), 'utf8')
+      await mkdir(path.dirname(commandPath), { recursive: true })
+      await writeFile(commandPath, commandContent, 'utf8')
+
+      await runCli(sandbox.workspace, ['install', '--scope', 'project'], { OPENCODE_CONFIG_DIR: sandbox.globalConfigDir })
+      const report = await uninstallFramework({
+        scope: 'project',
+        projectRoot: sandbox.workspace,
+        env: { ...process.env, OPENCODE_CONFIG_DIR: sandbox.globalConfigDir },
+      })
+
+      expect(await readFile(commandPath, 'utf8')).toBe(commandContent)
+      await expect(readFile(path.join(sandbox.workspace, 'opencode.json'), 'utf8')).rejects.toMatchObject({ code: 'ENOENT' })
+      await expect(readFile(path.join(sandbox.workspace, 'tui.json'), 'utf8')).rejects.toMatchObject({ code: 'ENOENT' })
+      await expect(readFile(path.join(sandbox.workspace, '.opencode', 'super-opencode', 'install-state.json'), 'utf8')).rejects.toMatchObject({ code: 'ENOENT' })
+      expect(report.items.some((item) => item.name === '.opencode/commands/sc-agent.md' && item.status === 'skipped')).toBe(true)
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
+  })
+
   test('fails install without rewriting an invalid opencode.json', async () => {
     const sandbox = await createSandbox('invalid-opencode-install')
 
@@ -451,6 +477,38 @@ describe('Framework bootstrap', () => {
       ).rejects.toThrow(/Invalid JSONC/)
 
       expect(await readFile(tuiPath, 'utf8')).toBe(invalidJsonc)
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
+  })
+
+  test('update refreshes stale schema values in config files', async () => {
+    const sandbox = await createSandbox('schema-refresh')
+
+    try {
+      await runCli(sandbox.workspace, ['install', '--scope', 'project'], { OPENCODE_CONFIG_DIR: sandbox.globalConfigDir })
+
+      const opencodePath = path.join(sandbox.workspace, 'opencode.json')
+      const tuiPath = path.join(sandbox.workspace, 'tui.json')
+      const opencodeConfig = await readJson(opencodePath)
+      const tuiConfig = await readJson(tuiPath)
+      opencodeConfig.$schema = 'https://example.invalid/old-opencode-schema.json'
+      tuiConfig.$schema = 'https://example.invalid/old-tui-schema.json'
+      await writeFile(opencodePath, `${JSON.stringify(opencodeConfig, null, 2)}\n`, 'utf8')
+      await writeFile(tuiPath, `${JSON.stringify(tuiConfig, null, 2)}\n`, 'utf8')
+
+      const report = await updateFramework({
+        scope: 'project',
+        projectRoot: sandbox.workspace,
+        env: { ...process.env, OPENCODE_CONFIG_DIR: sandbox.globalConfigDir },
+      })
+
+      const refreshedOpencode = await readJson(opencodePath)
+      const refreshedTui = await readJson(tuiPath)
+      expect(refreshedOpencode.$schema).not.toBe('https://example.invalid/old-opencode-schema.json')
+      expect(refreshedTui.$schema).not.toBe('https://example.invalid/old-tui-schema.json')
+      expect(report.items.some((item) => item.name === 'opencode.json' && item.status === 'updated')).toBe(true)
+      expect(report.items.some((item) => item.name === 'tui.json' && item.status === 'updated')).toBe(true)
     } finally {
       await rm(sandbox.root, { recursive: true, force: true })
     }

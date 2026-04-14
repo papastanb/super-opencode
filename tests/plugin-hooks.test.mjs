@@ -66,7 +66,8 @@ describe('Super OpenCode runtime hooks', () => {
     const second = await SuperOpenCodePlugin({ client, worktree: 'D:/repo' })
 
     expect(typeof first['experimental.chat.system.transform']).toBe('function')
-    expect(second).toEqual({})
+    expect(typeof second['experimental.session.compacting']).toBe('function')
+    expect(second['experimental.chat.system.transform']).toBeUndefined()
     expect(logs).toEqual([
       'Super OpenCode plugin initialized',
       'Super OpenCode runtime already active, skipping duplicate hook registration',

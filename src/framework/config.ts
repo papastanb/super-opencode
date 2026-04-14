@@ -244,7 +244,7 @@ export async function patchOpencodeConfig(options: {
   let changed = created
   const addedMcpHashes: Record<string, string> = { ...(options.state?.ownership.addedMcpHashes ?? {}) }
 
-  if (typeof config.$schema !== "string") {
+  if (config.$schema !== options.manifest.config.opencode.schema) {
     config.$schema = options.manifest.config.opencode.schema
     changed = true
   }
@@ -324,7 +324,7 @@ export async function patchTuiConfig(options: {
   const config: JsonObject = { ...value }
   let changed = created
 
-  if (typeof config.$schema !== "string") {
+  if (config.$schema !== options.manifest.config.tui.schema) {
     config.$schema = options.manifest.config.tui.schema
     changed = true
   }

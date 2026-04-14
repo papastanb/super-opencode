@@ -66,6 +66,10 @@
     "install:global": "bun run src/cli.ts install --scope global",
     "status:project": "bun run src/cli.ts status --scope project",
     "status:global": "bun run src/cli.ts status --scope global",
+    "update:project": "bun run src/cli.ts update --scope project",
+    "update:global": "bun run src/cli.ts update --scope global",
+    "uninstall:project": "bun run src/cli.ts uninstall --scope project",
+    "uninstall:global": "bun run src/cli.ts uninstall --scope global",
     "test": "bun test",
     "test:coverage": "bun test --coverage",
     "lint": "tsc --noEmit"
@@ -83,6 +87,6 @@
   },
   "engines": {
     "node": ">=22",
-    "opencode": "^1.0.0"
+    "opencode": ">=1.4.3"
   }
 }

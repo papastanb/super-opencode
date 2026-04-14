@@ -12,6 +12,10 @@ function emptyHooks(): Hooks {
   return {}
 }
 
+function mergeHooks(...hookSets: Hooks[]): Hooks {
+  return Object.assign({}, ...hookSets)
+}
+
 /** Creates the runtime plugin hooks and skips duplicate registration within one process. */
 export const SuperOpenCodePlugin: Plugin = async ({ client, worktree }) => {
   const runtimeState = globalThis as GlobalRuntimeState
@@ -24,7 +28,7 @@ export const SuperOpenCodePlugin: Plugin = async ({ client, worktree }) => {
       },
     })
 
-    return emptyHooks()
+    return createCompactionHooks(worktree)
   }
 
   runtimeState[runtimeLoadMarker] = true
@@ -38,11 +42,7 @@ export const SuperOpenCodePlugin: Plugin = async ({ client, worktree }) => {
       },
     })
 
-    return {
-      ...createSystemHooks(),
-      ...createCommandHooks(),
-      ...createCompactionHooks(worktree),
-    }
+    return mergeHooks(createSystemHooks(), createCommandHooks(), createCompactionHooks(worktree))
   } catch (error) {
     delete runtimeState[runtimeLoadMarker]
     throw error

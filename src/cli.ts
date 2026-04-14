@@ -15,14 +15,14 @@ function parseScope(value: string | undefined): Scope {
 
 type CliOptions = Omit<FrameworkOptions, "scope"> & { scope?: Scope }
 const supportedCommands = new Set(["install", "status", "update", "uninstall", "scopes"])
+const usage =
+  "Usage: super-opencode-framework <install|status|update|uninstall> --scope <global|project> [--force]\n       super-opencode-framework scopes"
 
 function parseArgs(argv: string[]): { command: string; options: CliOptions } {
   const [command = "install", ...rest] = argv
 
   if (!supportedCommands.has(command)) {
-    throw new Error(
-      "Usage: super-opencode-framework <install|status|update|uninstall|scopes> --scope <global|project> [--force]",
-    )
+    throw new Error(usage)
   }
 
   const force = rest.includes("--force")
@@ -94,9 +94,7 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
       return 0
     }
     default:
-      throw new Error(
-        "Usage: super-opencode-framework <install|status|update|uninstall|scopes> --scope <global|project> [--force]",
-      )
+      throw new Error(usage)
   }
 
   process.stdout.write(renderReport(report))

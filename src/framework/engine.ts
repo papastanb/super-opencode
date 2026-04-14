@@ -86,12 +86,33 @@ async function removeEmptyDirectories(startDir: string, stopDir: string): Promis
       return
     }
 
-    const entries = await readdir(current)
+    let entries: string[]
+    try {
+      entries = await readdir(current)
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code
+      if (code === "ENOENT") {
+        return
+      }
+
+      throw error
+    }
+
     if (entries.length > 0) {
       return
     }
 
-    await rmdir(current)
+    try {
+      await rmdir(current)
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code
+      if (code === "ENOENT" || code === "ENOTEMPTY") {
+        return
+      }
+
+      throw error
+    }
+
     current = path.dirname(current)
   }
 }
@@ -421,7 +442,6 @@ export async function uninstallFramework(options: FrameworkOptions): Promise<Fra
     const currentHash = hashContent(content)
     // Skip deleting adopted files unless --force is used
     if (fileState.origin === "adopted" && !(options.force ?? false)) {
-      remainingFiles[relativePath] = fileState
       report.items.push({
         kind: "asset",
         name: relativePath,
@@ -528,6 +548,10 @@ export async function uninstallFramework(options: FrameworkOptions): Promise<Fra
   }
 
   await removeInstallState(paths.statePath)
+  await removeEmptyDirectories(
+    path.dirname(paths.statePath),
+    options.scope === "global" ? paths.configDir : path.join(paths.projectRoot, ".opencode"),
+  )
   report.restartRequired = changed
   report.items.push({
     kind: "runtime",
