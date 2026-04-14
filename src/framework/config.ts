@@ -231,6 +231,10 @@ function ensureStringArray(input: unknown): string[] {
   return Array.isArray(input) ? input.filter((entry): entry is string => typeof entry === "string") : []
 }
 
+function ensureArray(input: unknown): unknown[] {
+  return Array.isArray(input) ? [...input] : []
+}
+
 /**
  * Merges framework requirements into opencode.json while preserving JSONC comments when possible.
  * Existing user MCP entries keep their explicit fields unless the entry is still framework-managed
@@ -253,20 +257,22 @@ export async function patchOpencodeConfig(options: {
     changed = true
   }
 
-  const plugins = normalizePluginArray(config.plugin)
+  const existingPluginEntries = ensureArray(config.plugin)
+  const plugins = normalizePluginArray(existingPluginEntries)
   let addedPlugin = false
   if (!hasPluginSpec(plugins, options.manifest.config.opencode.plugin)) {
-    plugins.push(options.manifest.config.opencode.plugin)
-    config.plugin = plugins
+    config.plugin = [...existingPluginEntries, options.manifest.config.opencode.plugin]
     changed = true
     addedPlugin = true
   }
 
-  const instructions = ensureStringArray(config.instructions)
+  const instructions = ensureArray(config.instructions)
+  const instructionStrings = ensureStringArray(instructions)
   const addedInstructions: string[] = []
   for (const instruction of options.manifest.config.opencode.instructions[options.scope]) {
-    if (!instructions.includes(instruction)) {
+    if (!instructionStrings.includes(instruction)) {
       instructions.push(instruction)
+      instructionStrings.push(instruction)
       addedInstructions.push(instruction)
       changed = true
     }
@@ -340,11 +346,11 @@ export async function patchTuiConfig(options: {
     changed = true
   }
 
-  const plugins = normalizePluginArray(config.plugin)
+  const existingPluginEntries = ensureArray(config.plugin)
+  const plugins = normalizePluginArray(existingPluginEntries)
   let addedPlugin = false
   if (!hasPluginSpec(plugins, options.manifest.config.tui.plugin)) {
-    plugins.push(options.manifest.config.tui.plugin)
-    config.plugin = plugins
+    config.plugin = [...existingPluginEntries, options.manifest.config.tui.plugin]
     changed = true
     addedPlugin = true
   }

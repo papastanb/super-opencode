@@ -271,6 +271,53 @@ describe('Framework bootstrap', () => {
     }
   })
 
+  test('preserves unrelated plugin and instruction entries when adding framework requirements', async () => {
+    const sandbox = await createSandbox('plugin-instruction-preserved-on-add')
+
+    try {
+      const manifest = await loadFrameworkManifest()
+      const diagnostics = await diagnoseMcpPolicies(manifest, {
+        ...process.env,
+        OPENCODE_CONFIG_DIR: sandbox.globalConfigDir,
+        CONTEXT7_API_KEY: 'token',
+      })
+
+      await writeFile(
+        path.join(sandbox.workspace, 'opencode.json'),
+        `{
+  "$schema": "https://example.invalid/outdated-schema.json",
+  "plugin": [null, 42, {"custom": true}],
+  "instructions": [null, 7],
+  "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "enabled": true,
+      "headers": {
+        "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}"
+      }
+    }
+  }
+}
+`,
+        'utf8',
+      )
+
+      await patchOpencodeConfig({
+        filePath: path.join(sandbox.workspace, 'opencode.json'),
+        manifest,
+        scope: 'project',
+        diagnostics: diagnostics.filter((entry) => entry.name === 'context7'),
+      })
+
+      const updatedConfig = await readJson(path.join(sandbox.workspace, 'opencode.json'))
+      expect(updatedConfig.plugin).toEqual([null, 42, { custom: true }, 'super-opencode-framework'])
+      expect(updatedConfig.instructions).toEqual([null, 7, '.opencode/instructions/opencode-core.md'])
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
+  })
+
   test('cli renders MCP diagnostics once in the dedicated section', async () => {
     const sandbox = await createSandbox('cli-mcp-rendering')
 
