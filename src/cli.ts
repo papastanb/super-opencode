@@ -39,6 +39,7 @@ function parseArgs(argv: string[]): { command: string; options: CliOptions } {
 }
 
 function renderReport(report: FrameworkReport): string {
+  const nonMcpItems = report.items.filter((item) => item.kind !== "mcp")
   const lines = [
     `Action: ${report.action}`,
     `Scope: ${report.scope}`,
@@ -50,7 +51,7 @@ function renderReport(report: FrameworkReport): string {
     "Items:",
   ]
 
-  for (const item of report.items) {
+  for (const item of nonMcpItems) {
     lines.push(`- [${item.status}] ${item.name}${item.detail ? `: ${item.detail}` : ""}`)
   }
 

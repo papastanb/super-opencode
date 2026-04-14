@@ -225,6 +225,71 @@ describe('Framework bootstrap', () => {
     }
   })
 
+  test('preserves unrelated plugin entries when the framework plugin is already present', async () => {
+    const sandbox = await createSandbox('plugin-array-preserved')
+
+    try {
+      const manifest = await loadFrameworkManifest()
+      const diagnostics = await diagnoseMcpPolicies(manifest, {
+        ...process.env,
+        OPENCODE_CONFIG_DIR: sandbox.globalConfigDir,
+        CONTEXT7_API_KEY: 'token',
+      })
+
+      await writeFile(
+        path.join(sandbox.workspace, 'opencode.json'),
+        `{
+  "$schema": "https://example.invalid/outdated-schema.json",
+  "plugin": ["super-opencode-framework", null, 42, {"custom": true}],
+  "instructions": [".opencode/instructions/opencode-core.md"],
+  "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "enabled": true,
+      "headers": {
+        "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}"
+      }
+    }
+  }
+}
+`,
+        'utf8',
+      )
+
+      await patchOpencodeConfig({
+        filePath: path.join(sandbox.workspace, 'opencode.json'),
+        manifest,
+        scope: 'project',
+        diagnostics: diagnostics.filter((entry) => entry.name === 'context7'),
+      })
+
+      const updatedConfig = await readJson(path.join(sandbox.workspace, 'opencode.json'))
+      expect(updatedConfig.plugin).toEqual(['super-opencode-framework', null, 42, { custom: true }])
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
+  })
+
+  test('cli renders MCP diagnostics once in the dedicated section', async () => {
+    const sandbox = await createSandbox('cli-mcp-rendering')
+
+    try {
+      const { stdout } = await runCli(sandbox.workspace, ['status', '--scope', 'project'], {
+        OPENCODE_CONFIG_DIR: sandbox.globalConfigDir,
+        CONTEXT7_API_KEY: '',
+        TAVILY_API_KEY: '',
+        MORPH_API_KEY: '',
+      })
+
+      expect(stdout).toContain('\nMCP:\n')
+      expect(stdout).not.toContain('- [configured but disabled by missing env] context7\n\nMCP:')
+      expect(stdout.match(/\[configured but disabled by missing env\] context7/g)?.length).toBe(1)
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
+  })
+
   test('updates unchanged managed MCP config when framework defaults change', async () => {
     const sandbox = await createSandbox('mcp-managed-refresh')
 

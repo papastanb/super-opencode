@@ -8,12 +8,20 @@ type GlobalRuntimeState = typeof globalThis & {
   [runtimeLoadMarker]?: boolean
 }
 
-function emptyHooks(): Hooks {
-  return {}
-}
-
 function mergeHooks(...hookSets: Hooks[]): Hooks {
-  return Object.assign({}, ...hookSets)
+  const merged: Hooks = {}
+
+  for (const hookSet of hookSets) {
+    for (const [key, handler] of Object.entries(hookSet)) {
+      if (Object.prototype.hasOwnProperty.call(merged, key)) {
+        throw new Error(`Super OpenCode hook collision for '${key}'`)
+      }
+
+      ;(merged as Record<string, unknown>)[key] = handler
+    }
+  }
+
+  return merged
 }
 
 /** Creates the runtime plugin hooks and skips duplicate registration within one process. */

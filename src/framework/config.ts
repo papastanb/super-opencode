@@ -4,7 +4,7 @@ import path from "node:path"
 
 import { applyEdits, modify, parse, printParseErrorCode, type ParseError } from "jsonc-parser"
 
-import type { FrameworkInstallState, FrameworkManifest, McpDiagnostic, ReportItem, Scope, ScopeDetection } from "./types.js"
+import type { FrameworkInstallState, FrameworkManifest, McpDiagnostic, Scope, ScopeDetection } from "./types.js"
 
 type JsonObject = Record<string, unknown>
 
@@ -256,8 +256,6 @@ export async function patchOpencodeConfig(options: {
     config.plugin = plugins
     changed = true
     addedPlugin = true
-  } else if (plugins.length > 0) {
-    config.plugin = plugins
   }
 
   const instructions = ensureStringArray(config.instructions)
@@ -288,11 +286,15 @@ export async function patchOpencodeConfig(options: {
       addedMcpKeys.push(diagnostic.name)
     }
 
+    // Managed MCP entries that still match their recorded hash should follow framework defaults on update.
+    // Diverged or pre-existing user entries keep their explicit values except for prerequisite-driven enablement.
     const mergedValue = shouldRefreshManagedEntry
       ? mergeObjects({}, diagnostic.config)
       : currentValue
         ? mergeObjects(diagnostic.config, currentValue)
         : { ...diagnostic.config }
+
+    // Prerequisite diagnostics remain authoritative for runtime enablement.
     mergedValue.enabled = diagnostic.enabled
     if (!isObject(currentValue) || !jsonValuesEqual(currentValue, mergedValue)) {
       changed = true
@@ -341,8 +343,6 @@ export async function patchTuiConfig(options: {
     config.plugin = plugins
     changed = true
     addedPlugin = true
-  } else if (plugins.length > 0) {
-    config.plugin = plugins
   }
 
   if (changed) {
@@ -435,7 +435,7 @@ export async function removeFrameworkConfig(options: {
         continue
       }
 
-      if (expectedHash !== undefined && hashJsonValue(nextMcp[key]) !== expectedHash) {
+      if (hashJsonValue(nextMcp[key]) !== expectedHash) {
         conflicts.push(key)
         remainingAddedMcpKeys.push(key)
         remainingAddedMcpHashes[key] = expectedHash
@@ -524,25 +524,4 @@ export async function removeFrameworkTuiConfig(options: {
 
   await writeJson(options.filePath, config)
   return { changed: true, removedFile: false }
-}
-
-/** Builds a standard report item for config file writes. */
-export function configReportItems(kind: "opencode" | "tui", changed: boolean, created: boolean): ReportItem[] {
-  if (changed) {
-    return [
-      {
-        kind: "config",
-        name: `${kind}.json`,
-        status: created ? "installed" : "updated",
-      },
-    ]
-  }
-
-  return [
-    {
-      kind: "config",
-      name: `${kind}.json`,
-      status: "already up to date",
-    },
-  ]
 }
