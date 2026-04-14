@@ -27,6 +27,7 @@ function isObject(value: unknown): value is JsonObject {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value)
 }
 
+/** Produces a deterministic JSON-safe value shape for stable hashing and equality checks. */
 function stableJsonValue(value: unknown): unknown {
   if (Array.isArray(value)) {
     return value.map((entry) => stableJsonValue(entry))
@@ -44,10 +45,12 @@ function stableJsonValue(value: unknown): unknown {
     }, {})
 }
 
+/** Hashes a JSON value after stable key ordering so persisted ownership checks are reproducible. */
 function hashJsonValue(value: unknown): string {
   return createHash("sha256").update(JSON.stringify(stableJsonValue(value))).digest("hex")
 }
 
+/** Maps a parser offset to 1-based line and column coordinates for user-facing config errors. */
 function getLineAndColumn(text: string, offset: number): { line: number; column: number } {
   let line = 1
   let column = 1
@@ -65,6 +68,7 @@ function getLineAndColumn(text: string, offset: number): { line: number; column:
   return { line, column }
 }
 
+/** Formats a JSONC parser error into a bootstrap-specific validation message. */
 function formatJsoncParseError(filePath: string, raw: string, error: ParseError): Error {
   const { line, column } = getLineAndColumn(raw, error.offset)
   return new Error(
@@ -72,6 +76,7 @@ function formatJsoncParseError(filePath: string, raw: string, error: ParseError)
   )
 }
 
+/** Parses a JSONC object and fails fast when the file cannot be safely mutated. */
 function parseJsoncObject(raw: string, filePath: string): JsonObject {
   const errors: ParseError[] = []
   const parsed = parse(raw, errors)
@@ -357,6 +362,7 @@ function removeInstructions(instructions: string[], managed: string[]): string[]
   return instructions.filter((entry) => !managed.includes(entry))
 }
 
+/** Treats schema-only configs as disposable when the framework created the file. */
 function hasMeaningfulConfigContent(config: JsonObject): boolean {
   return Object.keys(config).some((key) => key !== "$schema")
 }

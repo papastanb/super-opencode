@@ -24,6 +24,7 @@ export function createEmptyState(scope: Scope, packageVersion: string, manifestV
   }
 }
 
+/** Backfills newer ownership fields so older persisted install states remain safe to consume. */
 function normalizeInstallState(state: FrameworkInstallState): FrameworkInstallState {
   const ownership = state.ownership ?? createEmptyState(state.scope, state.packageVersion, state.manifestVersion).ownership
 
