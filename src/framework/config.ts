@@ -282,12 +282,17 @@ export async function patchOpencodeConfig(options: {
     const wasPreviouslyManaged = options.state?.ownership.addedMcpKeys.includes(diagnostic.name) ?? false
     const previousManagedHash = options.state?.ownership.addedMcpHashes[diagnostic.name]
     const divergedManagedEntry = currentValue !== undefined && previousManagedHash !== undefined && hashJsonValue(currentValue) !== previousManagedHash
+    const shouldRefreshManagedEntry = wasPreviouslyManaged && previousManagedHash !== undefined && !divergedManagedEntry
 
     if (!currentValue) {
       addedMcpKeys.push(diagnostic.name)
     }
 
-    const mergedValue = currentValue ? mergeObjects(diagnostic.config, currentValue) : { ...diagnostic.config }
+    const mergedValue = shouldRefreshManagedEntry
+      ? mergeObjects({}, diagnostic.config)
+      : currentValue
+        ? mergeObjects(diagnostic.config, currentValue)
+        : { ...diagnostic.config }
     mergedValue.enabled = diagnostic.enabled
     if (!isObject(currentValue) || !jsonValuesEqual(currentValue, mergedValue)) {
       changed = true

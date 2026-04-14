@@ -225,6 +225,51 @@ describe('Framework bootstrap', () => {
     }
   })
 
+  test('updates unchanged managed MCP config when framework defaults change', async () => {
+    const sandbox = await createSandbox('mcp-managed-refresh')
+
+    try {
+      await installFramework({
+        scope: 'project',
+        projectRoot: sandbox.workspace,
+        env: {
+          ...process.env,
+          OPENCODE_CONFIG_DIR: sandbox.globalConfigDir,
+          CONTEXT7_API_KEY: 'token',
+        },
+      })
+
+      const manifest = await loadFrameworkManifest()
+      const diagnostics = await diagnoseMcpPolicies(manifest, {
+        ...process.env,
+        OPENCODE_CONFIG_DIR: sandbox.globalConfigDir,
+        CONTEXT7_API_KEY: 'token',
+      })
+      const state = await readJson(path.join(sandbox.workspace, '.opencode', 'super-opencode', 'install-state.json'))
+
+      await patchOpencodeConfig({
+        filePath: path.join(sandbox.workspace, 'opencode.json'),
+        manifest,
+        scope: 'project',
+        diagnostics: diagnostics
+          .filter((entry) => entry.name === 'context7')
+          .map((entry) => ({
+            ...entry,
+            config: {
+              ...entry.config,
+              url: 'https://example.invalid/updated-context7',
+            },
+          })),
+        state,
+      })
+
+      const updatedConfig = await readJson(path.join(sandbox.workspace, 'opencode.json'))
+      expect(updatedConfig.mcp.context7.url).toBe('https://example.invalid/updated-context7')
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
+  })
+
   test('reports conflicts instead of overwriting a user-modified managed file', async () => {
     const sandbox = await createSandbox('conflict')
 
