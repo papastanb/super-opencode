@@ -735,6 +735,9 @@ describe('MCP diagnostics', () => {
       expect(missingAssetItems.length).toBeGreaterThan(0)
       expect(missingAssetItems.every((item) => item.status === 'skipped')).toBe(true)
       expect(report.items.some((item) => item.status === 'installed')).toBe(false)
+      await expect(
+        readFile(path.join(sandbox.workspace, '.opencode', 'super-opencode', 'install-state.json'), 'utf8'),
+      ).rejects.toMatchObject({ code: 'ENOENT' })
     } finally {
       await rm(sandbox.root, { recursive: true, force: true })
     }

@@ -75,7 +75,12 @@ export async function writeInstallState(filePath: string, state: FrameworkInstal
     }
 
     await rm(filePath, { force: true })
-    await rename(tempPath, filePath)
+    try {
+      await rename(tempPath, filePath)
+    } catch (renameError) {
+      await rm(tempPath, { force: true })
+      throw renameError
+    }
   }
 }
 

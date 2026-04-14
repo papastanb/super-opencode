@@ -382,7 +382,7 @@ export async function statusFramework(options: FrameworkOptions): Promise<Framew
     scope: options.scope,
     configDir: paths.configDir,
     projectRoot: paths.projectRoot,
-    stateFiles: state.files,
+    stateFiles: { ...state.files },
     reportItems: report.items,
     force: false,
     dryRun: true,

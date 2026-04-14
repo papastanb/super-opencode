@@ -231,7 +231,11 @@ function ensureStringArray(input: unknown): string[] {
   return Array.isArray(input) ? input.filter((entry): entry is string => typeof entry === "string") : []
 }
 
-/** Merges framework requirements into opencode.json while preserving JSONC comments when possible. */
+/**
+ * Merges framework requirements into opencode.json while preserving JSONC comments when possible.
+ * Existing user MCP entries keep their explicit fields unless the entry is still framework-managed
+ * and matches its recorded ownership hash, in which case framework defaults can refresh on update.
+ */
 export async function patchOpencodeConfig(options: {
   filePath: string
   manifest: FrameworkManifest
