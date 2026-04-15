@@ -5,7 +5,7 @@ import { applyEdits, modify } from "jsonc-parser"
 
 import { writeTextAtomically } from "./file-write.js"
 import { hasPluginSpec, isObject, parseJsoncObject, type JsonObject } from "./jsonc.js"
-import type { FrameworkInstallState, FrameworkManifest, McpDiagnostic, Scope, ScopeDetection } from "./types.js"
+import type { FrameworkInstallState, FrameworkManifest, McpDiagnostic, Scope } from "./types.js"
 
 type ConfigPatchResult = {
   changed: boolean
@@ -191,9 +191,10 @@ function readArrayConfigValue(config: JsonObject, key: string, filePath: string)
   return [...value]
 }
 
-function ensureArray(input: unknown): unknown[] {
-  return Array.isArray(input) ? [...input] : []
-}
+// Dead code: ensureArray was replaced by readArrayConfigValue which validates array shapes before use
+// function ensureArray(input: unknown): unknown[] {
+//   return Array.isArray(input) ? [...input] : []
+// }
 
 /**
  * Merges framework requirements into opencode.json while preserving JSONC comments when possible.
