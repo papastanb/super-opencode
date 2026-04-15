@@ -595,6 +595,54 @@ describe('Framework bootstrap', () => {
     }
   })
 
+  test('uninstall preserves unrelated plugin and instruction entries while removing framework config', async () => {
+    const sandbox = await createSandbox('uninstall-preserves-unrelated-config')
+
+    try {
+      await writeFile(
+        path.join(sandbox.workspace, 'opencode.json'),
+        `{
+  "$schema": "https://example.invalid/outdated-schema.json",
+  "plugin": [null, 42, {"custom": true}],
+  "instructions": [null, 7]
+}
+`,
+        'utf8',
+      )
+      await writeFile(
+        path.join(sandbox.workspace, 'tui.json'),
+        `{
+  "$schema": "https://example.invalid/outdated-schema.json",
+  "plugin": [null, 42, {"custom": true}]
+}
+`,
+        'utf8',
+      )
+
+      await installFramework({
+        scope: 'project',
+        projectRoot: sandbox.workspace,
+        env: { ...process.env, OPENCODE_CONFIG_DIR: sandbox.globalConfigDir },
+      })
+
+      const report = await uninstallFramework({
+        scope: 'project',
+        projectRoot: sandbox.workspace,
+        env: { ...process.env, OPENCODE_CONFIG_DIR: sandbox.globalConfigDir },
+      })
+
+      const opencodeConfig = await readJson(path.join(sandbox.workspace, 'opencode.json'))
+      const tuiConfig = await readJson(path.join(sandbox.workspace, 'tui.json'))
+
+      expect(opencodeConfig.plugin).toEqual([null, 42, { custom: true }])
+      expect(opencodeConfig.instructions).toEqual([null, 7])
+      expect(tuiConfig.plugin).toEqual([null, 42, { custom: true }])
+      expect(report.items.some((item) => item.kind === 'config' && item.status === 'updated')).toBe(true)
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
+  })
+
   test('fails install without rewriting an invalid opencode.json', async () => {
     const sandbox = await createSandbox('invalid-opencode-install')
 

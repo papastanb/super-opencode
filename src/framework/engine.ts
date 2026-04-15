@@ -33,8 +33,24 @@ function hashContent(content: string): string {
 
 async function readPackageMetadata(packageRoot: string): Promise<PackageMetadata> {
   const packageJsonPath = path.join(packageRoot, "package.json")
-  const packageJson = JSON.parse(await readFile(packageJsonPath, "utf8")) as PackageMetadata
-  return packageJson
+  let packageJson: unknown
+
+  try {
+    packageJson = JSON.parse(await readFile(packageJsonPath, "utf8"))
+  } catch (error) {
+    throw new Error(`Failed to read package metadata from ${packageRoot}: ${(error as Error).message}`)
+  }
+
+  if (
+    !packageJson ||
+    typeof packageJson !== "object" ||
+    typeof (packageJson as { version?: unknown }).version !== "string" ||
+    (packageJson as { version: string }).version.trim().length === 0
+  ) {
+    throw new Error(`Invalid package metadata in ${packageRoot}: package.json is missing a non-empty version string.`)
+  }
+
+  return { version: (packageJson as { version: string }).version }
 }
 
 async function listRelativeFiles(root: string, prefix = ""): Promise<string[]> {

@@ -73,4 +73,20 @@ describe('Super OpenCode runtime hooks', () => {
       'Super OpenCode runtime already active, skipping duplicate hook registration',
     ])
   })
+
+  test('runtime plugin still initializes when logging fails', async () => {
+    const client = {
+      app: {
+        log: async () => {
+          throw new Error('log unavailable')
+        },
+      },
+    }
+
+    const hooks = await SuperOpenCodePlugin({ client, worktree: 'D:/repo' })
+
+    expect(typeof hooks['experimental.chat.system.transform']).toBe('function')
+    expect(typeof hooks['command.execute.before']).toBe('function')
+    expect(typeof hooks['experimental.session.compacting']).toBe('function')
+  })
 })

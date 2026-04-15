@@ -5,7 +5,15 @@ import { createCommandHooks, createCompactionHooks, createSystemHooks } from "./
 const runtimeLoadMarker = Symbol.for("super-opencode.runtime-loaded")
 
 type GlobalRuntimeState = typeof globalThis & {
-  [runtimeLoadMarker]?: boolean
+  [key: symbol]: boolean | undefined
+}
+
+async function safeLog(logOperation: () => Promise<unknown>): Promise<void> {
+  try {
+    await logOperation()
+  } catch {
+    // Logging should never block hook initialization.
+  }
 }
 
 function mergeHooks(...hookSets: Hooks[]): Hooks {
@@ -28,13 +36,15 @@ function mergeHooks(...hookSets: Hooks[]): Hooks {
 export const SuperOpenCodePlugin: Plugin = async ({ client, worktree }) => {
   const runtimeState = globalThis as GlobalRuntimeState
   if (runtimeState[runtimeLoadMarker]) {
-    await client.app.log({
-      body: {
-        service: "super-opencode",
-        level: "info",
-        message: "Super OpenCode runtime already active, skipping duplicate hook registration",
-      },
-    })
+    await safeLog(() =>
+      client.app.log({
+        body: {
+          service: "super-opencode",
+          level: "info",
+          message: "Super OpenCode runtime already active, skipping duplicate hook registration",
+        },
+      }),
+    )
 
     return createCompactionHooks(worktree)
   }
@@ -42,13 +52,15 @@ export const SuperOpenCodePlugin: Plugin = async ({ client, worktree }) => {
   runtimeState[runtimeLoadMarker] = true
 
   try {
-    await client.app.log({
-      body: {
-        service: "super-opencode",
-        level: "info",
-        message: "Super OpenCode plugin initialized",
-      },
-    })
+    await safeLog(() =>
+      client.app.log({
+        body: {
+          service: "super-opencode",
+          level: "info",
+          message: "Super OpenCode plugin initialized",
+        },
+      }),
+    )
 
     return mergeHooks(createSystemHooks(), createCommandHooks(), createCompactionHooks(worktree))
   } catch (error) {

@@ -366,15 +366,22 @@ export async function patchTuiConfig(options: {
   }
 }
 
-function removePluginSpec(plugins: Array<string | [string, Record<string, unknown>]>, spec: string) {
-  return plugins.filter((entry) => {
-    const value = typeof entry === "string" ? entry : entry[0]
-    return value !== spec && !value.startsWith(`${spec}@`)
+function removePluginSpecFromEntries(entries: unknown[], spec: string): unknown[] {
+  return entries.filter((entry) => {
+    if (typeof entry === "string") {
+      return entry !== spec && !entry.startsWith(`${spec}@`)
+    }
+
+    if (Array.isArray(entry) && typeof entry[0] === "string") {
+      return entry[0] !== spec && !entry[0].startsWith(`${spec}@`)
+    }
+
+    return true
   })
 }
 
-function removeInstructions(instructions: string[], managed: string[]): string[] {
-  return instructions.filter((entry) => !managed.includes(entry))
+function removeManagedInstructionEntries(entries: unknown[], managed: string[]): unknown[] {
+  return entries.filter((entry) => typeof entry !== "string" || !managed.includes(entry))
 }
 
 /** Treats schema-only configs as disposable when the framework created the file. */
@@ -412,7 +419,7 @@ export async function removeFrameworkConfig(options: {
   const remainingAddedMcpHashes: Record<string, string> = {}
 
   if (options.state.ownership.addedOpencodePlugin) {
-    const plugins = removePluginSpec(normalizePluginArray(config.plugin), options.manifest.config.opencode.plugin)
+    const plugins = removePluginSpecFromEntries(ensureArray(config.plugin), options.manifest.config.opencode.plugin)
     if (plugins.length > 0) {
       config.plugin = plugins
     } else {
@@ -422,7 +429,7 @@ export async function removeFrameworkConfig(options: {
   }
 
   if (options.state.ownership.addedInstructions.length > 0) {
-    const instructions = removeInstructions(ensureStringArray(config.instructions), options.state.ownership.addedInstructions)
+    const instructions = removeManagedInstructionEntries(ensureArray(config.instructions), options.state.ownership.addedInstructions)
     if (instructions.length > 0) {
       config.instructions = instructions
     } else {
@@ -509,7 +516,7 @@ export async function removeFrameworkTuiConfig(options: {
   const config: JsonObject = { ...value }
   let changed = false
   if (options.state.ownership.addedTuiPlugin) {
-    const plugins = removePluginSpec(normalizePluginArray(config.plugin), options.manifest.config.tui.plugin)
+    const plugins = removePluginSpecFromEntries(ensureArray(config.plugin), options.manifest.config.tui.plugin)
     if (plugins.length > 0) {
       config.plugin = plugins
     } else {
