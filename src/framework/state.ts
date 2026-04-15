@@ -1,7 +1,6 @@
-import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises"
-import path from "node:path"
-import { randomUUID } from "node:crypto"
+import { readFile, rm } from "node:fs/promises"
 
+import { writeTextAtomically } from "./file-write.js"
 import type { FrameworkInstallState, Scope } from "./types.js"
 
 /** Creates an empty persisted state object for a scope that has not been bootstrapped yet. */
@@ -62,26 +61,7 @@ export async function readInstallState(filePath: string): Promise<FrameworkInsta
 
 /** Persists the framework state used for idempotent updates and safe uninstalls. */
 export async function writeInstallState(filePath: string, state: FrameworkInstallState): Promise<void> {
-  await mkdir(path.dirname(filePath), { recursive: true })
-  const tempPath = `${filePath}.${randomUUID()}.tmp`
-  await writeFile(tempPath, `${JSON.stringify(state, null, 2)}\n`, "utf8")
-
-  try {
-    await rename(tempPath, filePath)
-  } catch (error) {
-    if (!["EEXIST", "EPERM"].includes((error as NodeJS.ErrnoException).code ?? "")) {
-      await rm(tempPath, { force: true })
-      throw error
-    }
-
-    await rm(filePath, { force: true })
-    try {
-      await rename(tempPath, filePath)
-    } catch (renameError) {
-      await rm(tempPath, { force: true })
-      throw renameError
-    }
-  }
+  await writeTextAtomically(filePath, `${JSON.stringify(state, null, 2)}\n`)
 }
 
 /** Removes the persisted framework state file for a scope. */

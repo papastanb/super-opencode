@@ -3,6 +3,7 @@ import type { Hooks } from "@opencode-ai/plugin"
 import { autoCheckpointHint, commandPersistenceHint, persistenceContract } from "./memory.js"
 
 const persistenceCommands = new Set(["sc-pm", "sc-save", "sc-load", "sc-reflect"])
+// Checkpoint hints target longer-running execution commands rather than planning/persistence commands.
 const checkpointCommands = new Set(["sc-implement", "sc-build", "sc-test", "sc-document", "sc-task"])
 
 type TextLikePart = {

@@ -24,7 +24,7 @@ function assertFrameworkManifest(value: unknown): asserts value is FrameworkMani
   }
 }
 
-/** Loads the packaged framework manifest once per process and retries after load failures. */
+/** Loads the packaged framework manifest once per process; long-lived hosts need a restart to observe package updates. */
 export async function loadFrameworkManifest(): Promise<FrameworkManifest> {
   if (cachedManifestPromise) {
     return cachedManifestPromise

@@ -112,6 +112,7 @@ export type McpDiagnostic = {
   config: Record<string, unknown>
 }
 
+/** Framework reports expose MCP diagnostics twice: `mcp` is the dedicated view and `items` may also include MCP entries for aggregate consumers. */
 export type FrameworkReport = {
   action: FrameworkAction
   scope: Scope

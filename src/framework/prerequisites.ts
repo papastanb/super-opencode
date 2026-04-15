@@ -47,7 +47,7 @@ export const defaultBinaryResolver: BinaryResolver = async (binary, env) => {
   return false
 }
 
-/** Evaluates MCP prerequisites and returns the effective enabled state for each MCP entry. */
+/** Evaluates MCP prerequisites and returns the effective enabled state for each MCP entry. Env requirements take precedence over binary issues in the summary status. */
 export async function diagnoseMcpPolicies(
   manifest: FrameworkManifest,
   env: NodeJS.ProcessEnv,

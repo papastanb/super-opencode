@@ -2,8 +2,6 @@ import { createHash } from "node:crypto"
 import { mkdir, readFile, readdir, rm, rmdir, unlink, writeFile } from "node:fs/promises"
 import path from "node:path"
 
-import { parse, printParseErrorCode, type ParseError } from "jsonc-parser"
-
 import {
   patchOpencodeConfig,
   patchTuiConfig,
@@ -11,6 +9,7 @@ import {
   removeFrameworkTuiConfig,
   validateJsoncConfigFile,
 } from "./config.js"
+import { hasPluginSpec, isObject, parseJsoncObject, type JsonObject } from "./jsonc.js"
 import { loadFrameworkManifest } from "./manifest.js"
 import { resolveScopePaths } from "./paths.js"
 import { diagnoseMcpPolicies } from "./prerequisites.js"
@@ -29,59 +28,10 @@ type PackageMetadata = {
   version: string
 }
 
-type JsonObject = Record<string, unknown>
-
 type ConfigSnapshot = {
   exists: boolean
   value?: JsonObject
   error?: string
-}
-
-function isObject(value: unknown): value is JsonObject {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value)
-}
-
-function getLineAndColumn(text: string, offset: number): { line: number; column: number } {
-  let line = 1
-  let column = 1
-
-  for (let index = 0; index < offset; index += 1) {
-    if (text[index] === "\n") {
-      line += 1
-      column = 1
-      continue
-    }
-
-    column += 1
-  }
-
-  return { line, column }
-}
-
-function formatJsoncParseError(filePath: string, raw: string, error: ParseError): string {
-  const { line, column } = getLineAndColumn(raw, error.offset)
-  return `Invalid JSONC in ${filePath} at ${line}:${column}: ${printParseErrorCode(error.error)}.`
-}
-
-function parseJsoncObject(raw: string, filePath: string): JsonObject {
-  const errors: ParseError[] = []
-  const parsed = parse(raw, errors)
-  if (errors.length > 0) {
-    throw new Error(formatJsoncParseError(filePath, raw, errors[0]))
-  }
-
-  if (!isObject(parsed)) {
-    throw new Error(`Invalid JSONC in ${filePath}: root value must be an object.`)
-  }
-
-  return parsed
-}
-
-function hasPluginSpec(entries: unknown[], spec: string): boolean {
-  return entries.some((entry) => {
-    const value = typeof entry === "string" ? entry : Array.isArray(entry) && typeof entry[0] === "string" ? entry[0] : undefined
-    return value === spec || value?.startsWith(`${spec}@`) === true
-  })
 }
 
 async function readJsoncSnapshot(filePath: string): Promise<ConfigSnapshot> {
@@ -605,6 +555,7 @@ export async function installFramework(options: FrameworkOptions): Promise<Frame
   })
 
   for (const diagnostic of diagnostics) {
+    // Keep MCP diagnostics in both collections: report.mcp drives dedicated views while report.items feeds aggregate summaries.
     report.items.push({
       kind: "mcp",
       name: diagnostic.name,
@@ -668,6 +619,7 @@ export async function statusFramework(options: FrameworkOptions): Promise<Framew
   })
 
   for (const diagnostic of diagnostics) {
+    // Keep MCP diagnostics in both collections: report.mcp drives dedicated views while report.items feeds aggregate summaries.
     report.items.push({
       kind: "mcp",
       name: diagnostic.name,

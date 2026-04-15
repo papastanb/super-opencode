@@ -1,12 +1,11 @@
 import { createHash } from "node:crypto"
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises"
-import path from "node:path"
+import { readFile, rm } from "node:fs/promises"
 
-import { applyEdits, modify, parse, printParseErrorCode, type ParseError } from "jsonc-parser"
+import { applyEdits, modify } from "jsonc-parser"
 
+import { writeTextAtomically } from "./file-write.js"
+import { hasPluginSpec, isObject, parseJsoncObject, type JsonObject } from "./jsonc.js"
 import type { FrameworkInstallState, FrameworkManifest, McpDiagnostic, Scope, ScopeDetection } from "./types.js"
-
-type JsonObject = Record<string, unknown>
 
 type ConfigPatchResult = {
   changed: boolean
@@ -21,10 +20,6 @@ type TuiPatchResult = {
   changed: boolean
   created: boolean
   addedPlugin: boolean
-}
-
-function isObject(value: unknown): value is JsonObject {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value)
 }
 
 /** Produces a deterministic JSON-safe value shape for stable hashing and equality checks. */
@@ -50,46 +45,6 @@ function hashJsonValue(value: unknown): string {
   return createHash("sha256").update(JSON.stringify(stableJsonValue(value))).digest("hex")
 }
 
-/** Maps a parser offset to 1-based line and column coordinates for user-facing config errors. */
-function getLineAndColumn(text: string, offset: number): { line: number; column: number } {
-  let line = 1
-  let column = 1
-
-  for (let index = 0; index < offset; index += 1) {
-    if (text[index] === "\n") {
-      line += 1
-      column = 1
-      continue
-    }
-
-    column += 1
-  }
-
-  return { line, column }
-}
-
-/** Formats a JSONC parser error into a bootstrap-specific validation message. */
-function formatJsoncParseError(filePath: string, raw: string, error: ParseError): Error {
-  const { line, column } = getLineAndColumn(raw, error.offset)
-  return new Error(
-    `Invalid JSONC in ${filePath} at ${line}:${column}: ${printParseErrorCode(error.error)}. Fix the file before running framework bootstrap.`,
-  )
-}
-
-/** Parses a JSONC object and fails fast when the file cannot be safely mutated. */
-function parseJsoncObject(raw: string, filePath: string): JsonObject {
-  const errors: ParseError[] = []
-  const parsed = parse(raw, errors)
-  if (errors.length > 0) {
-    throw formatJsoncParseError(filePath, raw, errors[0])
-  }
-
-  if (!isObject(parsed)) {
-    throw new Error(`Invalid JSONC in ${filePath}: root value must be an object.`)
-  }
-
-  return parsed
-}
 
 function mergeObjects(base: JsonObject, override: JsonObject): JsonObject {
   const result: JsonObject = { ...base }
@@ -185,8 +140,6 @@ function applyJsoncObjectEdits(sourceText: string, currentValue: JsonObject, nex
 }
 
 async function writeJson(filePath: string, value: JsonObject): Promise<void> {
-  await mkdir(path.dirname(filePath), { recursive: true })
-
   let originalText: string | undefined
   try {
     originalText = await readFile(filePath, "utf8")
@@ -197,13 +150,14 @@ async function writeJson(filePath: string, value: JsonObject): Promise<void> {
   }
 
   if (originalText === undefined) {
-    await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8")
+    await writeTextAtomically(filePath, `${JSON.stringify(value, null, 2)}\n`)
     return
   }
 
+  // Re-read the source text here so JSONC edits preserve comments and user formatting from the current on-disk file.
   const parsed = parseJsoncObject(originalText, filePath)
   const updatedText = applyJsoncObjectEdits(originalText, parsed, value)
-  await writeFile(filePath, updatedText.endsWith("\n") ? updatedText : `${updatedText}\n`, "utf8")
+  await writeTextAtomically(filePath, updatedText.endsWith("\n") ? updatedText : `${updatedText}\n`)
 }
 
 function normalizePluginArray(input: unknown): Array<string | [string, Record<string, unknown>]> {
@@ -217,13 +171,6 @@ function normalizePluginArray(input: unknown): Array<string | [string, Record<st
     }
 
     return Array.isArray(entry) && typeof entry[0] === "string"
-  })
-}
-
-function hasPluginSpec(plugins: Array<string | [string, Record<string, unknown>]>, spec: string): boolean {
-  return plugins.some((entry) => {
-    const value = typeof entry === "string" ? entry : entry[0]
-    return value === spec || value.startsWith(`${spec}@`)
   })
 }
 
@@ -252,6 +199,7 @@ function ensureArray(input: unknown): unknown[] {
  * Merges framework requirements into opencode.json while preserving JSONC comments when possible.
  * Existing user MCP entries keep their explicit fields unless the entry is still framework-managed
  * and matches its recorded ownership hash, in which case framework defaults can refresh on update.
+ * For pre-existing or diverged entries, user-provided MCP fields keep priority so local overrides stay intact.
  */
 export async function patchOpencodeConfig(options: {
   filePath: string
