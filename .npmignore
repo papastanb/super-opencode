@@ -4,6 +4,7 @@ tests/
 coverage/
 *.log
 .npmrc
+BACKLOG.md
 docs/
 pr-body.md
 pr-body-v2.md

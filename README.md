@@ -134,6 +134,7 @@ Current policy covers:
 
 ## Documentation
 
+- [PROJECT_INDEX.md](PROJECT_INDEX.md): compact repository index for fast orientation
 - [INSTALL.md](INSTALL.md): installation details and troubleshooting
 - [USAGE.md](USAGE.md): usage patterns and command examples
 - [COMMANDS.md](COMMANDS.md): command reference

@@ -183,3 +183,9 @@ bun run release:check
 ```
 
 `bun run release:check` is the package integrity gate because it rebuilds the package and validates the published surface.
+
+## See Also
+
+- `PROJECT_INDEX.md` for a compact repository map, entrypoints, and automation index
+- `README.md` for installation and package-level usage
+- `COMMANDS.md` for the `/sc-*` command catalog

@@ -11,9 +11,8 @@ Thumbs.db
 *.log
 upstream-superclaude/
 .serena/
-PROJECT_INDEX.md
-PROJECT_INDEX.json
 .npmrc
+BACKLOG.md
 docs/
 pr-body.md
 pr-body-v2.md

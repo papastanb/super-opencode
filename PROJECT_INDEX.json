@@ -1,0 +1,303 @@
+{
+  "name": "super-opencode-framework",
+  "version": "1.0.1",
+  "kind": "opencode-framework-plugin",
+  "summary": "OpenCode plugin package with a server runtime, a TUI plugin, and a manifest-driven bootstrap engine that syncs Super OpenCode commands, agents, skills, and instructions into project or global scope.",
+  "counts": {
+    "commands": 28,
+    "agents": 15,
+    "skills": 6,
+    "testFiles": 2,
+    "testCases": 33,
+    "scripts": 4,
+    "githubWorkflows": 2
+  },
+  "entrypoints": [
+    {
+      "path": "src/server.ts",
+      "kind": "server-plugin",
+      "exports": ["default", "SuperOpenCodePlugin"]
+    },
+    {
+      "path": "src/tui.ts",
+      "kind": "tui-plugin",
+      "exports": ["default"]
+    },
+    {
+      "path": "src/cli.ts",
+      "kind": "cli-module",
+      "exports": ["runCli"]
+    },
+    {
+      "path": "scripts/install-project.mjs",
+      "kind": "published-bin-shim",
+      "targets": ["dist/src/cli.js"]
+    }
+  ],
+  "structure": [
+    {
+      "path": ".github/workflows",
+      "role": "CI and publish automation"
+    },
+    {
+      "path": "src/framework",
+      "role": "bootstrap engine, manifest loading, config patching, state, and MCP diagnostics",
+      "files": [
+        "config.ts",
+        "engine.ts",
+        "manifest.ts",
+        "package-root.ts",
+        "paths.ts",
+        "prerequisites.ts",
+        "state.ts",
+        "types.ts"
+      ]
+    },
+    {
+      "path": "src/runtime",
+      "role": "runtime hooks and Serena-oriented persistence guidance",
+      "files": ["hooks.ts", "memory.ts", "plugin.ts"]
+    },
+    {
+      "path": ".opencode/commands",
+      "role": "bundled /sc-* command assets"
+    },
+    {
+      "path": ".opencode/agents",
+      "role": "bundled specialist agent prompts"
+    },
+    {
+      "path": ".opencode/skills",
+      "role": "bundled mode and process skills"
+    },
+    {
+      "path": ".opencode/instructions",
+      "role": "OpenCode-specific behavioral instructions"
+    },
+    {
+      "path": "tests",
+      "role": "bootstrap and runtime regression coverage"
+    },
+    {
+      "path": "scripts",
+      "role": "validation and published CLI wrapper scripts"
+    },
+    {
+      "path": "dist",
+      "role": "generated build output"
+    },
+    {
+      "path": "node_modules",
+      "role": "installed dependencies"
+    }
+  ],
+  "workflowAssets": {
+    "commandsPath": ".opencode/commands",
+    "agentsPath": ".opencode/agents",
+    "skillsPath": ".opencode/skills",
+    "instructionsPath": ".opencode/instructions/opencode-core.md",
+    "exampleConfigPath": ".opencode/examples/opencode.example.json"
+  },
+  "docs": [
+    {
+      "path": "README.md",
+      "role": "overview, install flow, CLI usage, MCP strategy"
+    },
+    {
+      "path": "INSTALL.md",
+      "role": "installation details and troubleshooting"
+    },
+    {
+      "path": "USAGE.md",
+      "role": "usage patterns and examples"
+    },
+    {
+      "path": "COMMANDS.md",
+      "role": "command reference"
+    },
+    {
+      "path": "ARCHITECTURE.md",
+      "role": "layer model and package surface"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "role": "release history"
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "role": "contribution workflow"
+    },
+    {
+      "path": "AGENTS.md",
+      "role": "repo-specific agent instructions"
+    }
+  ],
+  "config": [
+    {
+      "path": "package.json",
+      "role": "package metadata, exports, bin, scripts"
+    },
+    {
+      "path": "framework.manifest.json",
+      "role": "asset sync and MCP policy manifest"
+    },
+    {
+      "path": "opencode.json",
+      "role": "OpenCode config and MCP defaults"
+    },
+    {
+      "path": "tui.json",
+      "role": "TUI plugin registration"
+    },
+    {
+      "path": "tsconfig.json",
+      "role": "base TypeScript config"
+    },
+    {
+      "path": "tsconfig.build.json",
+      "role": "build output config"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "role": "CI validation workflow"
+    },
+    {
+      "path": ".github/workflows/publish.yml",
+      "role": "release and publish workflow"
+    }
+  ],
+  "automation": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "trigger": "push and pull_request to main",
+      "checks": [
+        "typecheck",
+        "validate:structure",
+        "bun test",
+        "validate-cross-platform",
+        "release:check"
+      ]
+    },
+    {
+      "path": ".github/workflows/publish.yml",
+      "trigger": "push tags matching v*",
+      "checks": [
+        "typecheck",
+        "validate:structure",
+        "bun test",
+        "release:check",
+        "tag/version match",
+        "npm publish"
+      ]
+    }
+  ],
+  "scripts": [
+    {
+      "path": "scripts/install-project.mjs",
+      "role": "published bin shim"
+    },
+    {
+      "path": "scripts/validate-structure.mjs",
+      "role": "structure validation"
+    },
+    {
+      "path": "scripts/validate-package.mjs",
+      "role": "package surface validation"
+    },
+    {
+      "path": "scripts/validate-cross-platform.mjs",
+      "role": "scaffold/bootstrap portability validation"
+    }
+  ],
+  "api": {
+    "publicSurface": [
+      {
+        "name": "default export",
+        "path": "src/server.ts",
+        "notes": "OpenCode server plugin module"
+      },
+      {
+        "name": "SuperOpenCodePlugin",
+        "path": "src/server.ts",
+        "notes": "named runtime plugin export"
+      },
+      {
+        "name": "./server",
+        "path": "dist/src/server.js",
+        "notes": "published package export target"
+      },
+      {
+        "name": "./tui",
+        "path": "dist/src/tui.js",
+        "notes": "published package export target"
+      },
+      {
+        "name": "super-opencode-framework",
+        "path": "scripts/install-project.mjs",
+        "notes": "published CLI bin"
+      }
+    ],
+    "keyInternalModules": [
+      {
+        "path": "src/framework/engine.ts",
+        "symbols": [
+          "installFramework",
+          "statusFramework",
+          "updateFramework",
+          "uninstallFramework",
+          "detectFrameworkScopes"
+        ]
+      },
+      {
+        "path": "src/framework/config.ts",
+        "symbols": [
+          "patchOpencodeConfig",
+          "patchTuiConfig",
+          "removeFrameworkConfig",
+          "removeFrameworkTuiConfig"
+        ]
+      },
+      {
+        "path": "src/framework/manifest.ts",
+        "symbols": ["loadFrameworkManifest"]
+      },
+      {
+        "path": "src/runtime/hooks.ts",
+        "symbols": ["createSystemHooks", "createCommandHooks", "createCompactionHooks"]
+      },
+      {
+        "path": "src/cli.ts",
+        "symbols": ["runCli"]
+      }
+    ]
+  },
+  "tests": [
+    {
+      "path": "tests/framework.test.mjs",
+      "areas": [
+        "package exports",
+        "scope detection",
+        "project/global install",
+        "idempotence",
+        "conflict handling",
+        "update and uninstall safety",
+        "MCP diagnostics",
+        "status reporting"
+      ]
+    },
+    {
+      "path": "tests/plugin-hooks.test.mjs",
+      "areas": [
+        "system hook injection",
+        "command hint deduplication",
+        "compaction guidance deduplication",
+        "runtime single-registration"
+      ]
+    }
+  ],
+  "manualDocsPreserved": true,
+  "notes": [
+    "PROJECT_INDEX files are additive navigation artifacts, not architecture replacements.",
+    "Runtime contract is aligned on Node.js 24+ across docs and package metadata."
+  ]
+}
