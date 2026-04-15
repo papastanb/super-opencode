@@ -8,6 +8,8 @@ export type ReportStatus =
   | "already up to date"
   | "already present (unmanaged)"
   | "skipped"
+  | "invalid-config"
+  | "config-drift"
   | "blocked by missing env"
   | "blocked by missing binary"
   | "configured and enabled"

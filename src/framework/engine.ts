@@ -2,6 +2,8 @@ import { createHash } from "node:crypto"
 import { mkdir, readFile, readdir, rm, rmdir, unlink, writeFile } from "node:fs/promises"
 import path from "node:path"
 
+import { parse, printParseErrorCode, type ParseError } from "jsonc-parser"
+
 import {
   patchOpencodeConfig,
   patchTuiConfig,
@@ -25,6 +27,267 @@ import type {
 
 type PackageMetadata = {
   version: string
+}
+
+type JsonObject = Record<string, unknown>
+
+type ConfigSnapshot = {
+  exists: boolean
+  value?: JsonObject
+  error?: string
+}
+
+function isObject(value: unknown): value is JsonObject {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value)
+}
+
+function getLineAndColumn(text: string, offset: number): { line: number; column: number } {
+  let line = 1
+  let column = 1
+
+  for (let index = 0; index < offset; index += 1) {
+    if (text[index] === "\n") {
+      line += 1
+      column = 1
+      continue
+    }
+
+    column += 1
+  }
+
+  return { line, column }
+}
+
+function formatJsoncParseError(filePath: string, raw: string, error: ParseError): string {
+  const { line, column } = getLineAndColumn(raw, error.offset)
+  return `Invalid JSONC in ${filePath} at ${line}:${column}: ${printParseErrorCode(error.error)}.`
+}
+
+function parseJsoncObject(raw: string, filePath: string): JsonObject {
+  const errors: ParseError[] = []
+  const parsed = parse(raw, errors)
+  if (errors.length > 0) {
+    throw new Error(formatJsoncParseError(filePath, raw, errors[0]))
+  }
+
+  if (!isObject(parsed)) {
+    throw new Error(`Invalid JSONC in ${filePath}: root value must be an object.`)
+  }
+
+  return parsed
+}
+
+function hasPluginSpec(entries: unknown[], spec: string): boolean {
+  return entries.some((entry) => {
+    const value = typeof entry === "string" ? entry : Array.isArray(entry) && typeof entry[0] === "string" ? entry[0] : undefined
+    return value === spec || value?.startsWith(`${spec}@`) === true
+  })
+}
+
+async function readJsoncSnapshot(filePath: string): Promise<ConfigSnapshot> {
+  const raw = await readTextIfExists(filePath)
+  if (raw === undefined) {
+    return { exists: false }
+  }
+
+  try {
+    return {
+      exists: true,
+      value: parseJsoncObject(raw, filePath),
+    }
+  } catch (error) {
+    return {
+      exists: true,
+      error: error instanceof Error ? error.message : String(error),
+    }
+  }
+}
+
+function createConfigStatusItem(name: string, status: ReportItem["status"], detail: string): ReportItem {
+  return {
+    kind: "config",
+    name,
+    status,
+    detail,
+  }
+}
+
+async function inspectOpencodeStatus(options: {
+  filePath: string
+  statePath: string
+  manifest: Awaited<ReturnType<typeof loadFrameworkManifest>>
+  scope: FrameworkOptions["scope"]
+  diagnostics: Awaited<ReturnType<typeof diagnoseMcpPolicies>>
+}): Promise<{ item: ReportItem; ok: boolean }> {
+  const snapshot = await readJsoncSnapshot(options.filePath)
+  const name = path.basename(options.filePath)
+
+  if (!snapshot.exists) {
+    return {
+      ok: false,
+      item: createConfigStatusItem(name, "config-drift", `Missing config file. Install/update will recreate it. Install state: ${options.statePath}`),
+    }
+  }
+
+  if (snapshot.error) {
+    return {
+      ok: false,
+      item: createConfigStatusItem(name, "invalid-config", `${snapshot.error} Install state: ${options.statePath}`),
+    }
+  }
+
+  const config = snapshot.value
+  if (!config) {
+    return {
+      ok: false,
+      item: createConfigStatusItem(name, "invalid-config", `Config could not be parsed. Install state: ${options.statePath}`),
+    }
+  }
+
+  if (config.plugin !== undefined && !Array.isArray(config.plugin)) {
+    return {
+      ok: false,
+      item: createConfigStatusItem(name, "invalid-config", `"plugin" must be an array. Install state: ${options.statePath}`),
+    }
+  }
+
+  if (config.instructions !== undefined && !Array.isArray(config.instructions)) {
+    return {
+      ok: false,
+      item: createConfigStatusItem(name, "invalid-config", `"instructions" must be an array. Install state: ${options.statePath}`),
+    }
+  }
+
+  if (config.mcp !== undefined && !isObject(config.mcp)) {
+    return {
+      ok: false,
+      item: createConfigStatusItem(name, "invalid-config", `"mcp" must be an object. Install state: ${options.statePath}`),
+    }
+  }
+
+  const driftReasons: string[] = []
+  if (config.$schema !== options.manifest.config.opencode.schema) {
+    driftReasons.push(`$schema differs from ${options.manifest.config.opencode.schema}`)
+  }
+
+  const pluginEntries = Array.isArray(config.plugin) ? config.plugin : []
+  if (!hasPluginSpec(pluginEntries, options.manifest.config.opencode.plugin)) {
+    driftReasons.push(`missing plugin ${options.manifest.config.opencode.plugin}`)
+  }
+
+  const instructions = Array.isArray(config.instructions)
+    ? config.instructions.filter((entry): entry is string => typeof entry === "string")
+    : []
+  const missingInstructions = options.manifest.config.opencode.instructions[options.scope].filter((instruction) => !instructions.includes(instruction))
+  if (missingInstructions.length > 0) {
+    driftReasons.push(`missing instructions: ${missingInstructions.join(", ")}`)
+  }
+
+  const mcp = isObject(config.mcp) ? config.mcp : undefined
+  const missingMcpEntries: string[] = []
+  const mismatchedMcpEntries: string[] = []
+  for (const diagnostic of options.diagnostics) {
+    const currentEntry = mcp?.[diagnostic.name]
+    if (currentEntry === undefined) {
+      missingMcpEntries.push(diagnostic.name)
+      continue
+    }
+
+    if (!isObject(currentEntry)) {
+      return {
+        ok: false,
+        item: createConfigStatusItem(
+          name,
+          "invalid-config",
+          `"mcp.${diagnostic.name}" must be an object. Install state: ${options.statePath}`,
+        ),
+      }
+    }
+
+    if (currentEntry.enabled !== diagnostic.enabled) {
+      mismatchedMcpEntries.push(`${diagnostic.name} enabled=${String(currentEntry.enabled)}`)
+    }
+  }
+
+  if (missingMcpEntries.length > 0) {
+    driftReasons.push(`missing MCP entries: ${missingMcpEntries.join(", ")}`)
+  }
+
+  if (mismatchedMcpEntries.length > 0) {
+    driftReasons.push(`stale MCP enablement: ${mismatchedMcpEntries.join(", ")}`)
+  }
+
+  if (driftReasons.length > 0) {
+    return {
+      ok: false,
+      item: createConfigStatusItem(name, "config-drift", `${driftReasons.join("; ")}. Install state: ${options.statePath}`),
+    }
+  }
+
+  return {
+    ok: true,
+    item: createConfigStatusItem(name, "already up to date", `Validated against manifest requirements. Install state: ${options.statePath}`),
+  }
+}
+
+async function inspectTuiStatus(options: {
+  filePath: string
+  statePath: string
+  manifest: Awaited<ReturnType<typeof loadFrameworkManifest>>
+}): Promise<{ item: ReportItem; ok: boolean }> {
+  const snapshot = await readJsoncSnapshot(options.filePath)
+  const name = path.basename(options.filePath)
+
+  if (!snapshot.exists) {
+    return {
+      ok: false,
+      item: createConfigStatusItem(name, "config-drift", `Missing config file. Install/update will recreate it. Install state: ${options.statePath}`),
+    }
+  }
+
+  if (snapshot.error) {
+    return {
+      ok: false,
+      item: createConfigStatusItem(name, "invalid-config", `${snapshot.error} Install state: ${options.statePath}`),
+    }
+  }
+
+  const config = snapshot.value
+  if (!config) {
+    return {
+      ok: false,
+      item: createConfigStatusItem(name, "invalid-config", `Config could not be parsed. Install state: ${options.statePath}`),
+    }
+  }
+
+  if (config.plugin !== undefined && !Array.isArray(config.plugin)) {
+    return {
+      ok: false,
+      item: createConfigStatusItem(name, "invalid-config", `"plugin" must be an array. Install state: ${options.statePath}`),
+    }
+  }
+
+  const driftReasons: string[] = []
+  if (config.$schema !== options.manifest.config.tui.schema) {
+    driftReasons.push(`$schema differs from ${options.manifest.config.tui.schema}`)
+  }
+
+  const pluginEntries = Array.isArray(config.plugin) ? config.plugin : []
+  if (!hasPluginSpec(pluginEntries, options.manifest.config.tui.plugin)) {
+    driftReasons.push(`missing plugin ${options.manifest.config.tui.plugin}`)
+  }
+
+  if (driftReasons.length > 0) {
+    return {
+      ok: false,
+      item: createConfigStatusItem(name, "config-drift", `${driftReasons.join("; ")}. Install state: ${options.statePath}`),
+    }
+  }
+
+  return {
+    ok: true,
+    item: createConfigStatusItem(name, "already up to date", `Validated against manifest requirements. Install state: ${options.statePath}`),
+  }
 }
 
 function hashContent(content: string): string {
@@ -413,11 +676,33 @@ export async function statusFramework(options: FrameworkOptions): Promise<Framew
     })
   }
 
+  const [opencodeStatus, tuiStatus] = await Promise.all([
+    inspectOpencodeStatus({
+      filePath: paths.opencodeConfigPath,
+      statePath: paths.statePath,
+      manifest,
+      scope: options.scope,
+      diagnostics,
+    }),
+    inspectTuiStatus({
+      filePath: paths.tuiConfigPath,
+      statePath: paths.statePath,
+      manifest,
+    }),
+  ])
+
+  report.items.push(opencodeStatus.item, tuiStatus.item)
+
+  const runtimeStatus = opencodeStatus.ok && tuiStatus.ok ? "skipped" : report.items.some((item) => item.status === "invalid-config") ? "invalid-config" : "config-drift"
+
   report.items.push({
     kind: "runtime",
     name: "OpenCode runtime",
-    status: "skipped",
-    detail: `Install state file: ${paths.statePath}`,
+    status: runtimeStatus,
+    detail:
+      runtimeStatus === "skipped"
+        ? `Install state file: ${paths.statePath}`
+        : `Config validation found issues in bootstrap-managed files. Install state file: ${paths.statePath}`,
   })
 
   return report

@@ -63,11 +63,16 @@ describe('Super OpenCode runtime hooks', () => {
     }
 
     const first = await SuperOpenCodePlugin({ client, worktree: 'D:/repo' })
-    const second = await SuperOpenCodePlugin({ client, worktree: 'D:/repo' })
+    const second = await SuperOpenCodePlugin({ client, worktree: 'D:/repo2' })
+    const compactionOutput = { context: [] }
+
+    await second['experimental.session.compacting']({}, compactionOutput)
 
     expect(typeof first['experimental.chat.system.transform']).toBe('function')
     expect(typeof second['experimental.session.compacting']).toBe('function')
     expect(second['experimental.chat.system.transform']).toBeUndefined()
+    expect(compactionOutput.context).toHaveLength(1)
+    expect(compactionOutput.context[0]).toContain('Worktree: D:/repo2')
     expect(logs).toEqual([
       'Super OpenCode plugin initialized',
       'Super OpenCode runtime already active, skipping duplicate hook registration',

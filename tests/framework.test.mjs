@@ -382,6 +382,90 @@ describe('Framework bootstrap', () => {
     }
   })
 
+  test('fails fast when top-level opencode config shapes are invalid', async () => {
+    const sandbox = await createSandbox('invalid-opencode-shapes')
+
+    try {
+      const manifest = await loadFrameworkManifest()
+      const diagnostics = await diagnoseMcpPolicies(manifest, {
+        ...process.env,
+        OPENCODE_CONFIG_DIR: sandbox.globalConfigDir,
+        CONTEXT7_API_KEY: 'token',
+      })
+
+      await writeFile(
+        path.join(sandbox.workspace, 'opencode.json'),
+        `{
+  "plugin": { "bad": true },
+  "instructions": [".opencode/instructions/opencode-core.md"],
+  "mcp": {}
+}
+`,
+        'utf8',
+      )
+
+      await expect(
+        patchOpencodeConfig({
+          filePath: path.join(sandbox.workspace, 'opencode.json'),
+          manifest,
+          scope: 'project',
+          diagnostics: diagnostics.filter((entry) => entry.name === 'context7'),
+        }),
+      ).rejects.toThrow(/"plugin" must be an array/)
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
+  })
+
+  test('records ownership when bootstrap mutates a pre-existing MCP entry', async () => {
+    const sandbox = await createSandbox('mcp-preexisting-owned-after-mutation')
+
+    try {
+      const manifest = await loadFrameworkManifest()
+      const diagnostics = await diagnoseMcpPolicies(manifest, {
+        ...process.env,
+        OPENCODE_CONFIG_DIR: sandbox.globalConfigDir,
+        CONTEXT7_API_KEY: '',
+      })
+
+      await writeFile(
+        path.join(sandbox.workspace, 'opencode.json'),
+        `{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["super-opencode-framework"],
+  "instructions": [".opencode/instructions/opencode-core.md"],
+  "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "headers": {
+        "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}"
+      },
+      "enabled": true
+    }
+  }
+}
+`,
+        'utf8',
+      )
+
+      const result = await patchOpencodeConfig({
+        filePath: path.join(sandbox.workspace, 'opencode.json'),
+        manifest,
+        scope: 'project',
+        diagnostics: diagnostics.filter((entry) => entry.name === 'context7'),
+      })
+
+      expect(result.addedMcpKeys).toContain('context7')
+      expect(typeof result.addedMcpHashes.context7).toBe('string')
+
+      const updatedConfig = await readJson(path.join(sandbox.workspace, 'opencode.json'))
+      expect(updatedConfig.mcp.context7.enabled).toBe(false)
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
+  })
+
   test('reports conflicts instead of overwriting a user-modified managed file', async () => {
     const sandbox = await createSandbox('conflict')
 
@@ -830,6 +914,9 @@ describe('MCP diagnostics', () => {
       expect(missingAssetItems.length).toBeGreaterThan(0)
       expect(missingAssetItems.every((item) => item.status === 'skipped')).toBe(true)
       expect(report.items.some((item) => item.status === 'installed')).toBe(false)
+      expect(report.items.some((item) => item.kind === 'config' && item.name === 'opencode.json' && item.status === 'config-drift')).toBe(true)
+      expect(report.items.some((item) => item.kind === 'config' && item.name === 'tui.json' && item.status === 'config-drift')).toBe(true)
+      expect(report.items.some((item) => item.kind === 'runtime' && item.name === 'OpenCode runtime' && item.status === 'config-drift')).toBe(true)
       await expect(
         readFile(path.join(sandbox.workspace, '.opencode', 'super-opencode', 'install-state.json'), 'utf8'),
       ).rejects.toMatchObject({ code: 'ENOENT' })
@@ -863,6 +950,27 @@ describe('MCP diagnostics', () => {
       expect(assetItem?.status).toBe('skipped')
       expect(assetItem?.detail).toBe('Asset is outdated and would update on install/update.')
       expect(report.restartRequired).toBe(false)
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
+  })
+
+  test('status reports invalid config files without attempting bootstrap', async () => {
+    const sandbox = await createSandbox('status-invalid-configs')
+
+    try {
+      await writeFile(path.join(sandbox.workspace, 'opencode.json'), '{\n  "instructions": ["broken"\n}\n', 'utf8')
+      await writeFile(path.join(sandbox.workspace, 'tui.json'), '{\n  "plugin": ["broken"\n}\n', 'utf8')
+
+      const report = await statusFramework({
+        scope: 'project',
+        projectRoot: sandbox.workspace,
+        env: { ...process.env, OPENCODE_CONFIG_DIR: sandbox.globalConfigDir },
+      })
+
+      expect(report.items.some((item) => item.kind === 'config' && item.name === 'opencode.json' && item.status === 'invalid-config')).toBe(true)
+      expect(report.items.some((item) => item.kind === 'config' && item.name === 'tui.json' && item.status === 'invalid-config')).toBe(true)
+      expect(report.items.some((item) => item.kind === 'runtime' && item.name === 'OpenCode runtime' && item.status === 'invalid-config')).toBe(true)
     } finally {
       await rm(sandbox.root, { recursive: true, force: true })
     }

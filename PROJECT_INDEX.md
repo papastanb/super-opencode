@@ -7,12 +7,12 @@ Compact repository index for fast orientation. Existing hand-written docs remain
 | Item | Value |
 |---|---|
 | Package | `super-opencode-framework` |
-| Version | `1.0.1` |
+| Version | See [`package.json`](package.json) and [`CHANGELOG.md`](CHANGELOG.md) for the current release metadata. |
 | Language | TypeScript (`module: NodeNext`) |
 | Package targets | `./server`, `./tui`, CLI bin |
 | Core product shape | OpenCode plugin runtime + TUI plugin + manifest-driven bootstrap engine |
-| Shipped framework assets | 28 commands, 15 agents, 6 skills |
-| Test files | 2 (`33` test cases) |
+| Shipped framework assets | See [`framework.manifest.json`](framework.manifest.json) and [`.opencode/`](.opencode/) for the current packaged asset set. |
+| Test files | See [`tests/`](tests/) for the current regression suite. |
 
 ## README Summary
 

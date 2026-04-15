@@ -231,6 +231,19 @@ function ensureStringArray(input: unknown): string[] {
   return Array.isArray(input) ? input.filter((entry): entry is string => typeof entry === "string") : []
 }
 
+function readArrayConfigValue(config: JsonObject, key: string, filePath: string): unknown[] {
+  const value = config[key]
+  if (value === undefined) {
+    return []
+  }
+
+  if (!Array.isArray(value)) {
+    throw new Error(`Invalid OpenCode config in ${filePath}: "${key}" must be an array.`)
+  }
+
+  return [...value]
+}
+
 function ensureArray(input: unknown): unknown[] {
   return Array.isArray(input) ? [...input] : []
 }
@@ -257,7 +270,7 @@ export async function patchOpencodeConfig(options: {
     changed = true
   }
 
-  const existingPluginEntries = ensureArray(config.plugin)
+  const existingPluginEntries = readArrayConfigValue(config, "plugin", options.filePath)
   const plugins = normalizePluginArray(existingPluginEntries)
   let addedPlugin = false
   if (!hasPluginSpec(plugins, options.manifest.config.opencode.plugin)) {
@@ -266,7 +279,7 @@ export async function patchOpencodeConfig(options: {
     addedPlugin = true
   }
 
-  const instructions = ensureArray(config.instructions)
+  const instructions = readArrayConfigValue(config, "instructions", options.filePath)
   const instructionStrings = ensureStringArray(instructions)
   const addedInstructions: string[] = []
   for (const instruction of options.manifest.config.opencode.instructions[options.scope]) {
@@ -281,11 +294,19 @@ export async function patchOpencodeConfig(options: {
     config.instructions = instructions
   }
 
+  if (config.mcp !== undefined && !isObject(config.mcp)) {
+    throw new Error(`Invalid OpenCode config in ${options.filePath}: "mcp" must be an object.`)
+  }
+
   const existingMcp = isObject(config.mcp) ? config.mcp : {}
   const mergedMcp: JsonObject = { ...existingMcp }
   const addedMcpKeys: string[] = []
   for (const diagnostic of options.diagnostics) {
     const currentEntry = mergedMcp[diagnostic.name]
+    if (currentEntry !== undefined && !isObject(currentEntry)) {
+      throw new Error(`Invalid OpenCode config in ${options.filePath}: "mcp.${diagnostic.name}" must be an object.`)
+    }
+
     const currentValue = isObject(currentEntry) ? (currentEntry as JsonObject) : undefined
     const wasPreviouslyManaged = options.state?.ownership.addedMcpKeys.includes(diagnostic.name) ?? false
     const previousManagedHash = options.state?.ownership.addedMcpHashes[diagnostic.name]
@@ -306,11 +327,17 @@ export async function patchOpencodeConfig(options: {
 
     // Prerequisite diagnostics remain authoritative for runtime enablement.
     mergedValue.enabled = diagnostic.enabled
-    if (!isObject(currentValue) || !jsonValuesEqual(currentValue, mergedValue)) {
+    const entryChanged = currentValue === undefined || !jsonValuesEqual(currentValue, mergedValue)
+    if (entryChanged) {
       changed = true
     }
 
     mergedMcp[diagnostic.name] = mergedValue
+
+    if (currentValue !== undefined && !wasPreviouslyManaged && entryChanged) {
+      addedMcpKeys.push(diagnostic.name)
+      addedMcpHashes[diagnostic.name] = hashJsonValue(mergedValue)
+    }
 
     if (currentValue === undefined || (wasPreviouslyManaged && (previousManagedHash === undefined || !divergedManagedEntry))) {
       addedMcpHashes[diagnostic.name] = hashJsonValue(mergedValue)
@@ -346,7 +373,7 @@ export async function patchTuiConfig(options: {
     changed = true
   }
 
-  const existingPluginEntries = ensureArray(config.plugin)
+  const existingPluginEntries = readArrayConfigValue(config, "plugin", options.filePath)
   const plugins = normalizePluginArray(existingPluginEntries)
   let addedPlugin = false
   if (!hasPluginSpec(plugins, options.manifest.config.tui.plugin)) {
