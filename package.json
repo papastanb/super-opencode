@@ -1,7 +1,7 @@
 {
   "name": "super-opencode-framework",
   "version": "1.0.1",
-  "description": "OpenCode plugin package that ports key SuperClaude workflows and includes bundled /sc-* assets plus local sync support.",
+  "description": "OpenCode framework plugin package with explicit global/project bootstrap for commands, agents, skills, instructions, MCP config, and diagnostics.",
   "author": "SuperClaude Community",
   "license": "MIT",
   "homepage": "https://github.com/papastanb/super-opencode#readme",
@@ -22,24 +22,32 @@
   ],
   "type": "module",
   "packageManager": "bun@1.3.9",
-  "main": "./dist/.opencode/plugins/super-opencode.js",
-  "types": "./dist/.opencode/plugins/super-opencode.d.ts",
+  "main": "./dist/src/server.js",
+  "types": "./dist/src/server.d.ts",
   "bin": {
     "super-opencode-framework": "./scripts/install-project.mjs"
   },
   "exports": {
     ".": {
-      "types": "./dist/.opencode/plugins/super-opencode.d.ts",
-      "import": "./dist/.opencode/plugins/super-opencode.js"
+      "types": "./dist/src/server.d.ts",
+      "import": "./dist/src/server.js"
+    },
+    "./server": {
+      "types": "./dist/src/server.d.ts",
+      "import": "./dist/src/server.js"
+    },
+    "./tui": {
+      "types": "./dist/src/tui.d.ts",
+      "import": "./dist/src/tui.js"
     },
     "./package.json": "./package.json"
   },
   "files": [
     "dist/**/*",
+    "framework.manifest.json",
     ".opencode/commands/**/*.md",
     ".opencode/agents/**/*.md",
     ".opencode/skills/**/SKILL.md",
-    ".opencode/plugins/**/*.ts",
     ".opencode/examples/*.json",
     ".opencode/instructions/*.md",
     "scripts/install-project.mjs",
@@ -54,16 +62,31 @@
     "validate:structure": "node scripts/validate-structure.mjs",
     "validate:package": "node scripts/validate-package.mjs",
     "release:check": "bun run build && bun run validate:package",
-    "install:project": "node scripts/install-project.mjs install",
+    "install:project": "bun run src/cli.ts install --scope project",
+    "install:global": "bun run src/cli.ts install --scope global",
+    "status:project": "bun run src/cli.ts status --scope project",
+    "status:global": "bun run src/cli.ts status --scope global",
+    "update:project": "bun run src/cli.ts update --scope project",
+    "update:global": "bun run src/cli.ts update --scope global",
+    "uninstall:project": "bun run src/cli.ts uninstall --scope project",
+    "uninstall:global": "bun run src/cli.ts uninstall --scope global",
     "test": "bun test",
     "test:coverage": "bun test --coverage",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@opencode-ai/plugin": "^1.4.3"
+    "@opencode-ai/plugin": "^1.4.3",
+    "@opentui/core": "0.1.97",
+    "@opentui/solid": "0.1.97",
+    "jsonc-parser": "^3.3.1",
+    "solid-js": "^1.9.9"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
     "typescript": "^5.9.2"
+  },
+  "engines": {
+    "node": ">=24",
+    "opencode": ">=1.4.3"
   }
 }

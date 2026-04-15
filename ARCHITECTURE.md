@@ -2,9 +2,14 @@
 
 ## Overview
 
-Super OpenCode is an npm-installable OpenCode plugin package.
+Super OpenCode is a bi-target npm-installable OpenCode plugin package.
 
-It packages a plugin runtime plus bundled command prompts, agent prompts, mode skills, and instruction files that together port key SuperClaude workflow ideas into the OpenCode ecosystem.
+It packages:
+
+- a server runtime plugin for hooks
+- a TUI plugin for Plugin Manager visibility, bootstrap UI, and diagnostics
+- a shared manifest-driven bootstrap engine
+- bundled command prompts, agent prompts, mode skills, and instruction files
 
 At runtime, the high-level flow is:
 
@@ -58,41 +63,79 @@ These provide minimal but explicit support for the corresponding SuperClaude-ins
 
 ### Plugin Layer
 
-Lives in `.opencode/plugins/`.
+The runtime plugin is published through the npm package `./server` target.
 
-The plugin layer provides local behavior for:
+The local repo also keeps `.opencode/plugins/` wrappers for self-hosting during framework development, but the installer does not copy those plugin source files into user projects by default.
+
+The runtime layer provides:
 
 - persistence guidance
 - command hints
 - compaction/checkpoint hints
 - shared runtime glue
+- duplicate-load protection so hooks stay single-active even if npm and local plugin copies coexist
 
-This is the runtime plugin layer exposed by the npm package, not just internal repo code.
+### TUI Layer
+
+The TUI target is published through `./tui`.
+
+It is responsible for:
+
+- Plugin Manager visibility
+- first-load bootstrap prompting
+- scope selection (`global` or `project`)
+- install/status/update/uninstall UI
+- final bootstrap reporting
+
+### Bootstrap Layer
+
+The shared bootstrap engine is the product-critical layer for installation correctness.
+
+It is manifest-driven and used by:
+
+- the npm TUI plugin
+- the CLI entrypoint
+- future maintenance flows
+
+It handles:
+
+- scope resolution
+- asset sync for commands, agents, skills, and instructions
+- `opencode.json` merge for plugin, instructions, and MCP config
+- `tui.json` merge for TUI plugin registration
+- MCP prerequisite diagnostics
+- managed-file hashes for idempotent update and safe uninstall
 
 ### MCP Layer
 
-Configured through `opencode.json` in the consuming project.
+Configured through `opencode.json` in the chosen scope.
 
-Expected strategy:
+Current policy:
 
-- `serena`: required for the full persistence workflow
-- `context7`: recommended
-- `sequential`: recommended
-- `playwright`, `chrome-devtools`, `tavily`, `morph`: optional
+- `serena`: enabled only when `uvx` is available
+- `context7`: enabled only when `CONTEXT7_API_KEY` is present
+- `sequential`: enabled only when `npx` is available
+- `playwright`: enabled only when `npx` is available
+- `chrome-devtools`: enabled only when `npx` is available
+- `tavily`: enabled only when `npx` and `TAVILY_API_KEY` are present
+- `morph`: enabled only when `npx` and `MORPH_API_KEY` are present
 
 Super OpenCode is designed to degrade gracefully when optional MCPs are absent. Serena is the main exception because it underpins the intended persistence model.
 
 ## Published Package Surface
 
-The npm package publishes the plugin runtime and bundled assets:
+The npm package publishes:
 
+- `./server`
+- `./tui`
+- the shared bootstrap engine
+- `framework.manifest.json`
 - `.opencode/commands/**/*.md`
 - `.opencode/agents/**/*.md`
 - `.opencode/skills/**/SKILL.md`
-- `.opencode/plugins/**/*.ts`
 - `.opencode/examples/*.json`
 - `.opencode/instructions/*.md`
-- installer script and package metadata
+- the CLI wrapper and package metadata
 
 Repo-internal planning and memory files are not part of the public package contract.
 
@@ -102,7 +145,7 @@ Repo-internal planning and memory files are not part of the public package contr
 - Bun 1.3.9+
 - OpenCode
 
-The public contract is intentionally modest: the package ships an OpenCode plugin runtime together with bundled `/sc-*` assets, and does not rely on a standalone executable runtime of its own.
+The public contract is now explicit: the package ships an OpenCode server plugin, an OpenCode TUI plugin, and a bootstrap engine that materializes the framework assets into either global or project scope.
 
 ## Design Principles
 
@@ -140,3 +183,9 @@ bun run release:check
 ```
 
 `bun run release:check` is the package integrity gate because it rebuilds the package and validates the published surface.
+
+## See Also
+
+- `PROJECT_INDEX.md` for a compact repository map, entrypoints, and automation index
+- `README.md` for installation and package-level usage
+- `COMMANDS.md` for the `/sc-*` command catalog

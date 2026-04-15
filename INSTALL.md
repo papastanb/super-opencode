@@ -16,17 +16,18 @@
 4. Press `Shift+I` to install from npm.
 5. Enter `super-opencode-framework`.
 
-This is the preferred path when you want to install the package as an OpenCode plugin from the editor UX.
+This is the preferred path when you want to install the package from the OpenCode UX.
 
-What this installs:
+What happens now:
 
-- the npm plugin package itself
-- the runtime plugin hooks exported by the package
-- the bundled `/sc-*` commands, agents, skills, plugin files, and runtime instruction files that ship with the package
+1. OpenCode installs the npm package.
+2. Plugin Manager sees the package because it exposes both `./server` and `./tui`.
+3. The TUI bootstrap asks you to confirm `project` or `global` scope.
+4. The bootstrap syncs commands, agents, skills, instructions, `opencode.json`, and `tui.json` for that scope.
+5. MCP config is merged and validated.
+6. A final report explains what was installed, updated, skipped, or blocked.
 
-If you want those bundled assets materialized as local files in your project, use the manual sync flow below.
-
-## Manual Install And Local Asset Sync
+## Manual Install And Bootstrap
 
 ### 1. Install The Package
 
@@ -47,55 +48,71 @@ npm install -D super-opencode-framework
 With Bun:
 
 ```bash
-bunx super-opencode-framework install
+bunx super-opencode-framework install --scope project
+bunx super-opencode-framework install --scope global
 ```
 
 With npm:
 
 ```bash
-npx super-opencode-framework install
+npx super-opencode-framework install --scope project
+npx super-opencode-framework install --scope global
 ```
 
-Optional flags:
+Maintenance commands:
 
 With Bun:
 
 ```bash
-bunx super-opencode-framework install --target /path/to/project
-bunx super-opencode-framework install --force
+bunx super-opencode-framework status --scope project
+bunx super-opencode-framework update --scope project
+bunx super-opencode-framework uninstall --scope project
+bunx super-opencode-framework install --scope project --force
+bunx super-opencode-framework install --scope global --force
 ```
 
 With npm:
 
 ```bash
-npx super-opencode-framework install --target /path/to/project
-npx super-opencode-framework install --force
+npx super-opencode-framework status --scope project
+npx super-opencode-framework update --scope project
+npx super-opencode-framework uninstall --scope project
+npx super-opencode-framework install --scope project --force
+npx super-opencode-framework install --scope global --force
 ```
 
-### 3. Verify Your Project Config
+### 3. Scope Behavior
 
-The sync command copies the bundled OpenCode assets into your project and updates `opencode.json` when it already exists.
-
-Review these locations after installation:
+Project scope writes only to the current repository:
 
 - `.opencode/commands`
 - `.opencode/agents`
 - `.opencode/skills`
-- `.opencode/plugins`
-- `.opencode/instructions/opencode-core.md`
+- `.opencode/instructions`
+- `opencode.json`
+- `tui.json`
+
+Global scope writes only to the OpenCode global config directory:
+
+- `~/.config/opencode/commands`
+- `~/.config/opencode/agents`
+- `~/.config/opencode/skills`
+- `~/.config/opencode/instructions`
+- `~/.config/opencode/opencode.json`
+- `~/.config/opencode/tui.json`
+
+The scope is always explicit. If both global and project are installed, project assets override global assets.
 
 ### 4. Configure MCPs
 
-Super OpenCode expects Serena for the full persistence workflow.
+The bootstrap always merges framework MCP definitions into `opencode.json` and evaluates prerequisites before enabling them.
 
-Recommended MCP strategy:
+Reported states:
 
-- `serena`: enabled
-- `context7`: optional, recommended
-- `sequential`: optional, recommended
-- `playwright`, `chrome-devtools`, `tavily`, `morph`: optional
-
-Check the example config in `.opencode/examples/opencode.example.json`.
+- `configured and enabled`
+- `configured but disabled by missing env`
+- `configured but disabled by missing binary`
+- `configured but requires auth/manual setup`
 
 ### 5. Start OpenCode
 
@@ -127,28 +144,22 @@ If Node.js 24+ or Bun is missing, install them first and rerun the installer.
 
 ### No `opencode.json` In The Target Project
 
-The sync command can copy the bundled assets without `opencode.json`, but it cannot update instructions automatically.
-
-Add this path manually to your OpenCode config:
-
-```json
-{
-    "instructions": [".opencode/instructions/opencode-core.md"]
-}
-```
+The bootstrap creates `opencode.json` and `tui.json` when they do not already exist.
 
 ### Re-Sync The Bundled Assets
 
 With Bun:
 
 ```bash
-bunx super-opencode-framework install --force
+bunx super-opencode-framework update --scope project
+bunx super-opencode-framework install --scope project --force
 ```
 
 With npm:
 
 ```bash
-npx super-opencode-framework install --force
+npx super-opencode-framework update --scope project
+npx super-opencode-framework install --scope project --force
 ```
 
 ### Validate The Package Locally

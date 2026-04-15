@@ -1,6 +1,6 @@
 # Usage Guide
 
-Super OpenCode is primarily consumed as an OpenCode plugin package.
+Super OpenCode is primarily consumed as an OpenCode plugin package with an explicit bootstrap step.
 
 Recommended install flow:
 
@@ -10,11 +10,20 @@ Recommended install flow:
 4. Press `Shift+I`.
 5. Enter `super-opencode-framework`.
 
-If you want the bundled `/sc-*` assets copied into the current repository as local files, run the manual sync flow described in `INSTALL.md`.
+On first load from Plugin Manager, the TUI bootstrap asks for `project` or `global` scope and then syncs the framework into that location.
+
+The equivalent CLI flows are:
+
+```bash
+npx super-opencode-framework install --scope project
+npx super-opencode-framework status --scope project
+npx super-opencode-framework update --scope project
+npx super-opencode-framework uninstall --scope project
+```
 
 ## Start OpenCode
 
-After installing the plugin, start or restart OpenCode so the package is loaded.
+After the bootstrap changes files or config, restart OpenCode so commands, agents, skills, instructions, and MCP changes are rediscovered.
 
 ## First Commands To Know
 

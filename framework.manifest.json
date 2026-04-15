@@ -1,0 +1,188 @@
+{
+  "manifestVersion": 1,
+  "packageName": "super-opencode-framework",
+  "pluginId": "super-opencode-framework",
+  "stateFile": "super-opencode/install-state.json",
+  "assetGroups": [
+    {
+      "id": "commands",
+      "source": ".opencode/commands",
+      "targets": {
+        "global": "commands",
+        "project": ".opencode/commands"
+      }
+    },
+    {
+      "id": "agents",
+      "source": ".opencode/agents",
+      "targets": {
+        "global": "agents",
+        "project": ".opencode/agents"
+      }
+    },
+    {
+      "id": "skills",
+      "source": ".opencode/skills",
+      "targets": {
+        "global": "skills",
+        "project": ".opencode/skills"
+      }
+    },
+    {
+      "id": "instructions",
+      "source": ".opencode/instructions",
+      "targets": {
+        "global": "instructions",
+        "project": ".opencode/instructions"
+      }
+    }
+  ],
+  "config": {
+    "opencode": {
+      "schema": "https://opencode.ai/config.json",
+      "instructions": {
+        "global": [
+          "instructions/opencode-core.md"
+        ],
+        "project": [
+          ".opencode/instructions/opencode-core.md"
+        ]
+      },
+      "plugin": "super-opencode-framework"
+    },
+    "tui": {
+      "schema": "https://opencode.ai/tui.json",
+      "plugin": "super-opencode-framework"
+    }
+  },
+  "mcp": {
+    "serena": {
+      "config": {
+        "type": "local",
+        "command": [
+          "uvx",
+          "--from",
+          "git+https://github.com/oraios/serena",
+          "serena",
+          "start-mcp-server",
+          "--context",
+          "ide",
+          "--project-from-cwd"
+        ]
+      },
+      "requirements": {
+        "binaries": [
+          "uvx"
+        ]
+      },
+      "reason": "Serena powers persistence and continuity workflows."
+    },
+    "context7": {
+      "config": {
+        "type": "remote",
+        "url": "https://mcp.context7.com/mcp",
+        "headers": {
+          "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}"
+        }
+      },
+      "requirements": {
+        "env": [
+          "CONTEXT7_API_KEY"
+        ]
+      },
+      "reason": "Context7 adds official documentation lookup when an API key is available."
+    },
+    "sequential": {
+      "config": {
+        "type": "local",
+        "command": [
+          "npx",
+          "-y",
+          "@modelcontextprotocol/server-sequential-thinking"
+        ]
+      },
+      "requirements": {
+        "binaries": [
+          "npx"
+        ]
+      },
+      "reason": "Sequential thinking supports structured reasoning workflows."
+    },
+    "playwright": {
+      "config": {
+        "type": "local",
+        "command": [
+          "npx",
+          "-y",
+          "@playwright/mcp@latest"
+        ]
+      },
+      "requirements": {
+        "binaries": [
+          "npx"
+        ]
+      },
+      "reason": "Playwright MCP is enabled when npx is available for browser validation tasks."
+    },
+    "chrome-devtools": {
+      "config": {
+        "type": "local",
+        "command": [
+          "npx",
+          "-y",
+          "chrome-devtools-mcp@latest"
+        ]
+      },
+      "requirements": {
+        "binaries": [
+          "npx"
+        ]
+      },
+      "reason": "Chrome DevTools MCP is enabled when the package runner is available."
+    },
+    "tavily": {
+      "config": {
+        "type": "local",
+        "command": [
+          "npx",
+          "-y",
+          "tavily-mcp@latest"
+        ],
+        "environment": {
+          "TAVILY_API_KEY": "{env:TAVILY_API_KEY}"
+        }
+      },
+      "requirements": {
+        "binaries": [
+          "npx"
+        ],
+        "env": [
+          "TAVILY_API_KEY"
+        ]
+      },
+      "reason": "Tavily MCP needs both the npm runner and an API key."
+    },
+    "morph": {
+      "config": {
+        "type": "local",
+        "command": [
+          "npx",
+          "-y",
+          "@morph-llm/morph-fast-apply"
+        ],
+        "environment": {
+          "MORPH_API_KEY": "{env:MORPH_API_KEY}"
+        }
+      },
+      "requirements": {
+        "binaries": [
+          "npx"
+        ],
+        "env": [
+          "MORPH_API_KEY"
+        ]
+      },
+      "reason": "Morph MCP needs both the npm runner and an API key."
+    }
+  }
+}

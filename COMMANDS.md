@@ -111,6 +111,7 @@ Commands can load these skills when they materially improve execution quality.
 
 ## See Also
 
+- `PROJECT_INDEX.md` for a compact repository map and entrypoint index
 - `USAGE.md` for practical usage patterns
 - `ARCHITECTURE.md` for the command-agent-skill-plugin model
 - `.opencode/commands/` for the source command definitions bundled by the package

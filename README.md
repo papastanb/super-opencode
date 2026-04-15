@@ -1,6 +1,6 @@
 # Super OpenCode
 
-> OpenCode plugin package that ports key SuperClaude workflows and includes bundled `/sc-*` assets plus local sync support.
+> OpenCode framework plugin package with a real post-install bootstrap for commands, agents, skills, instructions, MCP config, diagnostics, and explicit global/project scopes.
 
 [![CI](https://github.com/papastanb/super-opencode/actions/workflows/ci.yml/badge.svg)](https://github.com/papastanb/super-opencode/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -12,9 +12,11 @@
 - 28 `/sc-*` commands for common engineering workflows
 - 15 specialist agent prompts
 - 6 reusable mode skills
-- An npm-installable OpenCode plugin runtime
-- Bundled command, agent, skill, plugin, and instruction assets
+- An npm-installable OpenCode plugin runtime with explicit `./server` and `./tui` targets
+- A manifest-driven bootstrap engine shared by the TUI, CLI, and maintenance flows
+- Bundled command, agent, skill, and instruction assets with scope-aware sync
 - Serena-first persistence guidance for OpenCode sessions
+- Idempotent install, status, update, and uninstall commands
 
 ## Runtime Contract
 
@@ -32,37 +34,66 @@ Primary flow from the OpenCode UI:
 4. Press `Shift+I` to install from npm.
 5. Enter `super-opencode-framework`.
 
-This installs the npm package that contains the Super OpenCode plugin runtime and its bundled assets.
+This installs the package and makes it visible in Plugin Manager because the package now exposes a real TUI target.
 
-## Sync Bundled Assets Locally
+On first load, the TUI bootstrap asks you to confirm a scope:
 
-If you want those packaged `/sc-*` commands, agents, skills, plugins, and runtime instruction files materialized as local files in the current repository, use the manual sync command below.
+- `project`: sync into `<repo>/.opencode`, `<repo>/opencode.json`, and `<repo>/tui.json`
+- `global`: sync into `~/.config/opencode`, `~/.config/opencode/opencode.json`, and `~/.config/opencode/tui.json`
 
-## Manual Package Install And Sync
+The bootstrap then:
+
+- syncs commands, agents, skills, and instructions
+- merges plugin, instructions, and MCP config without duplication
+- validates MCP prerequisites and reports enabled/disabled states
+- records managed file hashes so re-runs are idempotent
+- avoids copying local plugin source files by default
+
+## CLI Bootstrap
 
 With Bun:
 
 ```bash
 bun add -d super-opencode-framework
-bunx super-opencode-framework install
+bunx super-opencode-framework install --scope project
+bunx super-opencode-framework install --scope global
+bunx super-opencode-framework status --scope project
+bunx super-opencode-framework update --scope project
+bunx super-opencode-framework uninstall --scope project
 ```
 
 With npm:
 
 ```bash
 npm install -D super-opencode-framework
-npx super-opencode-framework install
+npx super-opencode-framework install --scope project
+npx super-opencode-framework install --scope global
+npx super-opencode-framework status --scope project
+npx super-opencode-framework update --scope project
+npx super-opencode-framework uninstall --scope project
 ```
 
-This syncs the bundled OpenCode assets into the current project:
+The CLI uses the same engine as the TUI bootstrap. The scope is always explicit and never guessed silently.
+
+Project scope syncs these locations:
 
 - `.opencode/commands`
 - `.opencode/agents`
 - `.opencode/skills`
-- `.opencode/plugins`
 - `.opencode/instructions/opencode-core.md`
+- `opencode.json`
+- `tui.json`
 
-If `opencode.json` already exists, the sync command appends `.opencode/instructions/opencode-core.md` to the `instructions` array when needed.
+Global scope syncs these locations:
+
+- `~/.config/opencode/commands`
+- `~/.config/opencode/agents`
+- `~/.config/opencode/skills`
+- `~/.config/opencode/instructions/opencode-core.md`
+- `~/.config/opencode/opencode.json`
+- `~/.config/opencode/tui.json`
+
+Project assets override global assets when both scopes are installed.
 
 ## Develop This Repository
 
@@ -82,10 +113,28 @@ bun run release:check
 - `sequential`: optional, recommended for structured reasoning
 - `playwright`, `chrome-devtools`, `tavily`, `morph`: optional, task-dependent
 
-The repo config enables `serena` and keeps the other MCPs available but disabled by default. See `.opencode/examples/opencode.example.json` for a fuller setup.
+The bootstrap always writes MCP config for the framework set and then evaluates prerequisites.
+
+Possible states:
+
+- `configured and enabled`
+- `configured but disabled by missing env`
+- `configured but disabled by missing binary`
+- `configured but requires auth/manual setup`
+
+Current policy covers:
+
+- `serena`
+- `context7`
+- `sequential`
+- `playwright`
+- `chrome-devtools`
+- `tavily`
+- `morph`
 
 ## Documentation
 
+- [PROJECT_INDEX.md](PROJECT_INDEX.md): compact repository index for fast orientation
 - [INSTALL.md](INSTALL.md): installation details and troubleshooting
 - [USAGE.md](USAGE.md): usage patterns and command examples
 - [COMMANDS.md](COMMANDS.md): command reference
@@ -95,7 +144,7 @@ The repo config enables `serena` and keeps the other MCPs available but disabled
 
 This repository is the source and development home for Super OpenCode.
 
-The npm package is an OpenCode plugin package. Its `/sc-*` commands, agents, skills, plugins, and runtime instruction files are part of the package; the manual sync flow simply copies those bundled assets into the local repository when you want them as project files.
+The npm package is a bi-target OpenCode plugin package. Runtime hooks stay in the npm plugin server target, while commands, agents, skills, and instructions are materialized through the bootstrap engine into the chosen scope.
 
 ## Publishing
 

@@ -7,17 +7,35 @@ import { execSync } from 'node:child_process'
 import { pathToFileURL } from 'node:url'
 
 const root = process.cwd()
-const distEntry = path.join(root, 'dist', '.opencode', 'plugins', 'super-opencode.js')
+const distServerEntry = path.join(root, 'dist', 'src', 'server.js')
+const distTuiEntry = path.join(root, 'dist', 'src', 'tui.js')
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm'
 
-if (!existsSync(distEntry)) {
-  console.error(`Missing built plugin entry: ${distEntry}`)
+if (!existsSync(distServerEntry)) {
+  console.error(`Missing built server entry: ${distServerEntry}`)
   process.exit(1)
 }
 
-const pluginModule = await import(pathToFileURL(distEntry).href)
-if (typeof pluginModule.SuperOpenCodePlugin !== 'function') {
-  console.error('Built plugin entry does not export SuperOpenCodePlugin')
+if (!existsSync(distTuiEntry)) {
+  console.error(`Missing built TUI entry: ${distTuiEntry}`)
+  process.exit(1)
+}
+
+const serverModule = await import(pathToFileURL(distServerEntry).href)
+const tuiModule = await import(pathToFileURL(distTuiEntry).href)
+
+if (typeof serverModule.SuperOpenCodePlugin !== 'function') {
+  console.error('Built server entry does not export SuperOpenCodePlugin')
+  process.exit(1)
+}
+
+if (typeof serverModule.default?.server !== 'function') {
+  console.error('Built server entry does not expose a default server plugin module')
+  process.exit(1)
+}
+
+if (typeof tuiModule.default?.tui !== 'function') {
+  console.error('Built TUI entry does not expose a default TUI plugin module')
   process.exit(1)
 }
 
@@ -48,8 +66,13 @@ for (const forbiddenPath of forbiddenPaths) {
   }
 }
 
-if (!packedPaths.includes('dist/.opencode/plugins/super-opencode.js')) {
-  console.error('Built plugin entry is missing from npm pack output')
+if (!packedPaths.includes('dist/src/server.js')) {
+  console.error('Built server entry is missing from npm pack output')
+  process.exit(1)
+}
+
+if (!packedPaths.includes('dist/src/tui.js')) {
+  console.error('Built TUI entry is missing from npm pack output')
   process.exit(1)
 }
 
