@@ -12,7 +12,10 @@ Thumbs.db
 upstream-superclaude/
 .serena/
 .npmrc
-BACKLOG.md
+BACKLOG*.md
+FEATURE*.md
+REFLECTION*.md
+NOTES*.md
 docs/
 pr-body.md
 pr-body-v2.md
