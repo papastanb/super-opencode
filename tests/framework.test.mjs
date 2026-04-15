@@ -417,7 +417,7 @@ describe('Framework bootstrap', () => {
     }
   })
 
-  test('records ownership when bootstrap mutates a pre-existing MCP entry', async () => {
+  test('does not claim ownership when bootstrap mutates a pre-existing MCP entry', async () => {
     const sandbox = await createSandbox('mcp-preexisting-owned-after-mutation')
 
     try {
@@ -456,8 +456,8 @@ describe('Framework bootstrap', () => {
         diagnostics: diagnostics.filter((entry) => entry.name === 'context7'),
       })
 
-      expect(result.addedMcpKeys).toContain('context7')
-      expect(typeof result.addedMcpHashes.context7).toBe('string')
+      expect(result.addedMcpKeys).not.toContain('context7')
+      expect(result.addedMcpHashes.context7).toBeUndefined()
 
       const updatedConfig = await readJson(path.join(sandbox.workspace, 'opencode.json'))
       expect(updatedConfig.mcp.context7.enabled).toBe(false)
@@ -722,6 +722,74 @@ describe('Framework bootstrap', () => {
       expect(opencodeConfig.instructions).toEqual([null, 7])
       expect(tuiConfig.plugin).toEqual([null, 42, { custom: true }])
       expect(report.items.some((item) => item.kind === 'config' && item.status === 'updated')).toBe(true)
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
+  })
+
+  test('fails uninstall without rewriting malformed owned plugin arrays', async () => {
+    const sandbox = await createSandbox('uninstall-malformed-plugin-array')
+
+    try {
+      await installFramework({
+        scope: 'project',
+        projectRoot: sandbox.workspace,
+        env: { ...process.env, OPENCODE_CONFIG_DIR: sandbox.globalConfigDir },
+      })
+
+      const opencodePath = path.join(sandbox.workspace, 'opencode.json')
+      const malformedConfig = `{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": { "broken": true },
+  "instructions": [".opencode/instructions/opencode-core.md"],
+  "mcp": {}
+}
+`
+      await writeFile(opencodePath, malformedConfig, 'utf8')
+
+      await expect(
+        uninstallFramework({
+          scope: 'project',
+          projectRoot: sandbox.workspace,
+          env: { ...process.env, OPENCODE_CONFIG_DIR: sandbox.globalConfigDir },
+        }),
+      ).rejects.toThrow(/"plugin" must be an array/)
+
+      expect(await readFile(opencodePath, 'utf8')).toBe(malformedConfig)
+    } finally {
+      await rm(sandbox.root, { recursive: true, force: true })
+    }
+  })
+
+  test('fails uninstall without rewriting malformed owned instruction arrays', async () => {
+    const sandbox = await createSandbox('uninstall-malformed-instruction-array')
+
+    try {
+      await installFramework({
+        scope: 'project',
+        projectRoot: sandbox.workspace,
+        env: { ...process.env, OPENCODE_CONFIG_DIR: sandbox.globalConfigDir },
+      })
+
+      const opencodePath = path.join(sandbox.workspace, 'opencode.json')
+      const malformedConfig = `{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["super-opencode-framework"],
+  "instructions": { "broken": true },
+  "mcp": {}
+}
+`
+      await writeFile(opencodePath, malformedConfig, 'utf8')
+
+      await expect(
+        uninstallFramework({
+          scope: 'project',
+          projectRoot: sandbox.workspace,
+          env: { ...process.env, OPENCODE_CONFIG_DIR: sandbox.globalConfigDir },
+        }),
+      ).rejects.toThrow(/"instructions" must be an array/)
+
+      expect(await readFile(opencodePath, 'utf8')).toBe(malformedConfig)
     } finally {
       await rm(sandbox.root, { recursive: true, force: true })
     }

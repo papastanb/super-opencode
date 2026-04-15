@@ -261,7 +261,7 @@ export async function patchOpencodeConfig(options: {
     const divergedManagedEntry = currentValue !== undefined && previousManagedHash !== undefined && hashJsonValue(currentValue) !== previousManagedHash
     const shouldRefreshManagedEntry = wasPreviouslyManaged && previousManagedHash !== undefined && !divergedManagedEntry
 
-    if (!currentValue) {
+    if (currentValue === undefined) {
       addedMcpKeys.push(diagnostic.name)
     }
 
@@ -281,11 +281,6 @@ export async function patchOpencodeConfig(options: {
     }
 
     mergedMcp[diagnostic.name] = mergedValue
-
-    if (currentValue !== undefined && !wasPreviouslyManaged && entryChanged) {
-      addedMcpKeys.push(diagnostic.name)
-      addedMcpHashes[diagnostic.name] = hashJsonValue(mergedValue)
-    }
 
     if (currentValue === undefined || (wasPreviouslyManaged && (previousManagedHash === undefined || !divergedManagedEntry))) {
       addedMcpHashes[diagnostic.name] = hashJsonValue(mergedValue)
@@ -394,7 +389,7 @@ export async function removeFrameworkConfig(options: {
   const remainingAddedMcpHashes: Record<string, string> = {}
 
   if (options.state.ownership.addedOpencodePlugin) {
-    const plugins = removePluginSpecFromEntries(ensureArray(config.plugin), options.manifest.config.opencode.plugin)
+    const plugins = removePluginSpecFromEntries(readArrayConfigValue(config, "plugin", options.filePath), options.manifest.config.opencode.plugin)
     if (plugins.length > 0) {
       config.plugin = plugins
     } else {
@@ -404,7 +399,10 @@ export async function removeFrameworkConfig(options: {
   }
 
   if (options.state.ownership.addedInstructions.length > 0) {
-    const instructions = removeManagedInstructionEntries(ensureArray(config.instructions), options.state.ownership.addedInstructions)
+    const instructions = removeManagedInstructionEntries(
+      readArrayConfigValue(config, "instructions", options.filePath),
+      options.state.ownership.addedInstructions,
+    )
     if (instructions.length > 0) {
       config.instructions = instructions
     } else {
@@ -491,7 +489,7 @@ export async function removeFrameworkTuiConfig(options: {
   const config: JsonObject = { ...value }
   let changed = false
   if (options.state.ownership.addedTuiPlugin) {
-    const plugins = removePluginSpecFromEntries(ensureArray(config.plugin), options.manifest.config.tui.plugin)
+    const plugins = removePluginSpecFromEntries(readArrayConfigValue(config, "plugin", options.filePath), options.manifest.config.tui.plugin)
     if (plugins.length > 0) {
       config.plugin = plugins
     } else {
